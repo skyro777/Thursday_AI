@@ -340,3 +340,43 @@ Stage Summary:
   huggingface_hub 0.25.x
   datasets        2.20.x
   OK: all imports succeeded.
+
+---
+Task ID: M0-fix-8
+Agent: Main Builder (GLM 5.2)
+Task: Pin bitsandbytes 0.43.x + accelerate 0.34.x to fix torch 2.10 compat
+
+Work Log:
+- User pasted cell 1 output. Imports all succeeded ('OK: all imports succeeded.').
+- BUT spotted this warning in pip output:
+    'Skipping import of cpp extensions due to incompatible torch version.
+     Please upgrade to torch >= 2.11.0 (found 2.10.0+cu128).'
+- AND noticed version numbers were much newer than expected:
+    torch           2.10.0+cu128  (Kaggle upgraded from 2.5.x)
+    bitsandbytes    0.50.2         (I didn't pin, pip pulled latest)
+    accelerate      1.13.0         (I didn't pin, pip pulled latest)
+- Root cause: bitsandbytes 0.50+ requires torch 2.11+ for its cpp extensions.
+  With torch 2.10, the cpp extensions are SKIPPED. 4-bit NF4 quantization
+  (used by Unsloth's load_in_4bit=True) is implemented IN those cpp extensions.
+  Without them, model load would either crash or fall back to pure-Python
+  (unusably slow — minutes per token).
+- Fix: added bitsandbytes>=0.43.1,<0.44.0 and accelerate>=0.34.0,<0.35.0
+  to the --force-reinstall --no-deps pin group.
+- Also added a cpp-extension loadability check to sanity-check section
+  so this kind of issue surfaces in cell 1, not cell 4.
+- Commit 37ccf04 pushed.
+
+Stage Summary:
+- All heavy packages now pinned: transformers 4.46, tokenizers 0.20, hub 0.25, trl 0.11.4, peft 0.13, bnb 0.43, accelerate 0.34
+- Expected sanity-check output:
+  torch           2.10.0+cu128
+  transformers    4.46.3
+  tokenizers      0.20.3
+  trl             0.11.4
+  peft            0.13.2
+  accelerate      0.34.x
+  bitsandbytes    0.43.x         ← was 0.50.2
+  huggingface_hub 0.36.2
+  datasets        4.3.0
+  bitsandbytes cpp extension: OK    ← new check
+  OK: all imports succeeded.
