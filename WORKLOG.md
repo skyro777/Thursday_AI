@@ -187,3 +187,33 @@ Stage Summary:
 - After installing, the cell will print versions: torch 2.5.x | transformers 4.46.x | trl 0.8.6 | peft 0.13.x | accelerate 0.34.x | bnb 0.43.x
 - Then "OK: all imports succeeded."
 - If even this doesn't work, the fallback is to skip Unsloth entirely and use vanilla transformers+peft+trl 0.8.6 stack — but Unsloth gives ~2x speedup so worth trying first
+
+---
+Task ID: M0-fix-4
+Agent: Main Builder (GLM 5.2)
+Task: Fix ImportError: huggingface-hub>=0.23.2,<1.0 required, found huggingface-hub==1.33.0
+
+Work Log:
+- User reported: import torch/trl/transformers/peft failed with:
+  "ImportError: huggingface-hub>=0.23.2,<1.0 is required for a normal functioning of this module, but found huggingface-hub==1.33.0"
+- Root cause: Kaggle just upgraded huggingface_hub to v1.x (1.33.0). Our pinned transformers 4.46.x has a hard requirement huggingface_hub<1.0.
+- My previous fix used 'pip install --upgrade huggingface_hub>=0.25.0' which pulled v1.33.0 (the newer major).
+- Fix:
+  * Install huggingface_hub FIRST with explicit 'huggingface_hub>=0.25.0,<1.0' + --force-reinstall
+  * Use --no-deps on transformers/trl/peft/accelerate/bitsandbytes so none of them can re-upgrade hub
+  * Pin peft to <0.14 too (newer peft may want newer hub)
+  * Added huggingface_hub + datasets to sanity-check imports
+
+Stage Summary:
+- Commit 92ca887 pushed
+- User should: re-download notebook (or replace cell 1) + Kernel → Restart + Run cell 1
+- After this fix, expected sanity-check output:
+  torch           2.5.x
+  transformers    4.46.x
+  trl             0.8.6
+  peft            0.13.x
+  accelerate      0.34.x
+  bitsandbytes    0.43.x
+  huggingface_hub 0.25.x
+  datasets        2.20.x
+  OK: all imports succeeded.
