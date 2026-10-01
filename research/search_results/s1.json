@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://huggingface.co/datasets/huggingface/agent-usage",
+    "name": "huggingface/agent-usage · Datasets at Hugging Face",
+    "snippet": "This dataset publishes each harness's share of that agent-attributed traffic, month by month and day by day, updated by a scheduled HF Job. Missing:  computer  2024",
+    "host_name": "huggingface.co",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://huggingface.co/datasets/huggingface/agent-usage/viewer",
+    "name": "huggingface/agent-usage · Datasets at Hugging Face",
+    "snippet": "We're on a journey to advance and democratize artificial intelligence through open source and open science. Missing:  computer  2024",
+    "host_name": "huggingface.co",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://huggingface.co/datasets/xlangai/CUA-Gym",
+    "name": "xlangai/CUA-Gym · Datasets at Hugging Face",
+    "snippet": "CUA-Gym is a collection of verifiable computer-use agent tasks for reinforcement learning with verifiable rewards (RLVR). Each task pairs a ...",
+    "host_name": "huggingface.co",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://huggingface.co/datasets/Datoric/computer-use-agent-traces-250k",
+    "name": "Datoric/computer-use-agent-traces-250k · Datasets at Hugging",
+    "snippet": "The Computer-Use Traces Dataset is a large-scale collection of 250,000 real-world computer interaction traces for training and evaluating AI agents that operate ... Missing:  2024  | Show results with:",
+    "host_name": "huggingface.co",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://huggingface.co/spaces/smolagents/computer-use-agent",
+    "name": "Computer Use Agent 2.0 - a Hugging Face Space by smolagents",
+    "snippet": "This web app loads a JavaScript bundle to provide an interactive interface in your browser. Users simply open the page and interact with the features built ... Missing:  dataset  2024",
+    "host_name": "huggingface.co",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.microsoft.com/en-us/research/articles/fara1-5-computer-use-agent",
+    "name": "Fara1.5 - A family of frontier computer use agent models",
+    "snippet": "5 weights (opens in new tab) are now publicly available on HuggingFace under the MIT license! This is a major advancement and sets a new SoTA ...",
+    "host_name": "www.microsoft.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://huggingface.co/collections/ranpox/awesome-computer-use-agents",
+    "name": "Awesome Computer Use Agents - a ranpox Collection",
+    "snippet": "GUI-WORLD: A Dataset for GUI-oriented Multimodal LLM-based Agents. Paper • 2406.10819 • Published Jun 16, 2024 • 2 · OS-Copilot: Towards ...",
+    "host_name": "huggingface.co",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/AI_Agents/comments/1hin4ra/open_computeruse_dataset",
+    "name": "Open computeruse dataset : r/AI_Agents - Reddit",
+    "snippet": "Have you checked out the datasets on Hugging Face or the work that the Argilla team (acq. by Hugging Face) is doing there around datasets? That ...",
+    "host_name": "www.reddit.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  }
+]

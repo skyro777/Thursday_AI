@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://huggingface.co/datasets/Salesforce/xlam-function-calling-60k",
+    "name": "Salesforce/xlam-function-calling-60k · Datasets at Hugging Face",
+    "snippet": "This repo contains 60,000 data collected by APIGen, an automated data generation pipeline designed to produce verifiable high-quality datasets ...",
+    "host_name": "huggingface.co",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://huggingface.co/datasets/Salesforce/xlam-function-calling-60k/tree/26d14ebfe18b1f7b524bd39b404b50af5dc97866/figures",
+    "name": "Salesforce/xlam-function-calling-60k at  - Hugging Face",
+    "snippet": "Datasets: Salesforce / xlam-function-calling-60k. Tasks: Question Answering Text Generation Reinforcement Learning Modalities: Text Formats: Size: 10K - 100K",
+    "host_name": "huggingface.co",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://huggingface.co/collections/Salesforce/xlam-models",
+    "name": "xLAM models - a Salesforce Collection - Hugging Face",
+    "snippet": "xLAM: A Family of Large Action Models to Empower AI Agent Systems: Salesforce/xlam-function-calling-60k Viewer. Models Datasets Spaces Pricing Docs",
+    "host_name": "huggingface.co",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://huggingface.co/datasets/Salesforce/xlam-function-calling-60k/tree/34f1d3ea05b7f06340b89ed98d45fce5b9aa1e71/dataset",
+    "name": "Salesforce/xlam-function-calling-60k at",
+    "snippet": "Datasets: Salesforce / xlam-function-calling-60k. Tasks: Question Answering Text Generation Reinforcement Learning Modalities: Text Formats: ...",
+    "host_name": "huggingface.co",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://huggingface.co/learn/cookbook/en/function_calling_fine_tuning_llms_on_xlam",
+    "name": "Fine-tuning LLMs for Function Calling with xLAM Dataset",
+    "snippet": "This notebook demonstrates how to fine-tune language models for function calling capabilities using the xLAM dataset from Salesforce and QLoRA",
+    "host_name": "huggingface.co",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://huggingface.co/datasets/Salesforce/xlam-function-calling-60k/discussions",
+    "name": "Salesforce/xlam-function-calling-60k · Discussions",
+    "snippet": "Datasets: Salesforce / xlam-function-calling-60k. Tasks: Question Answering Text Generation Reinforcement Learning Modalities: Text Formats: json Languages: ...",
+    "host_name": "huggingface.co",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://huggingface.co/models?dataset=dataset:Salesforce/xlam-function-calling-60k",
+    "name": "Models - Hugging Face",
+    "snippet": "Explore machine learning models. Salesforce/xlam-function-calling-60k. Salesforce/xLAM-1b-fc-r Text Generation",
+    "host_name": "huggingface.co",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.salesforce.com/blog/large-action-model-ai-agent",
+    "name": "xLAM: A Family of Large Action Models for AI Agents - Salesforce",
+    "snippet": "xLAM, a series of LLMs optimized for function calling and AI Agents. Models on HuggingFace: https://huggingface.co/collections/Salesforce/xlam- ...",
+    "host_name": "www.salesforce.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://huggingface.co/blog/davanstrien/self-instruct",
+    "name": "Synthetic dataset generation techniques: Self-Instruct",
+    "snippet": "In its simplest form, you could create synthetic instruction following datasets using an LLM to generate responses to handwritten prompts/ ... Missing:  agentic  | Show results with:",
+    "host_name": "huggingface.co",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://arxiv.org/html/2606.25996v3",
+    "name": "Autodata: An agentic data scientist to create high quality  - arXiv",
+    "snippet": "CoT Self-Instruct is standard prompted generation; Agentic Self-Instruct is the agentic loop accepted output. Both columns are graded by ...",
+    "host_name": "arxiv.org",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://medium.com/foundation-models-deep-dive/synthetic-data-generation-methods-for-llms-3aff1452ce68",
+    "name": "Synthetic Data Generation Methods for LLMs | by M - Medium",
+    "snippet": "This piece explores key methods for generating synthetic data to train LLMs: prompt-based generation, model distillation, and self-instruct ...",
+    "host_name": "medium.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://facebookresearch.github.io/RAM/blogs/autodata",
+    "name": "Autodata: an automatic data scientist to create high-quality data",
+    "snippet": "Agentic Self-Instruct, shows strong gains on scientific reasoning problems compared to classical synthetic dataset creation methods.",
+    "host_name": "facebookresearch.github.io",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://futureagi.com/blog/synthetic-data-fine-tuning-llms",
+    "name": "Synthetic Data for LLM Fine-Tuning in 2026 - Future AGI",
+    "snippet": "Generate synthetic data to fine-tune LLMs in 2026. Self-Instruct, Constitutional AI, DPO/IPO traces, function calling, and evaluating dataset quality.",
+    "host_name": "futureagi.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23751",
+    "name": "[2507.23751] CoT-Self-Instruct: Building high-quality synthetic",
+    "snippet": "We propose CoT-Self-Instruct, a synthetic data generation method that instructs LLMs to first reason and plan via Chain-of-Thought (CoT) based ... Missing:  agentic  trajectory",
+    "host_name": "arxiv.org",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/machinelearningnews/comments/1gt7iq0/microsoft_ai_research_released_1_million",
+    "name": "Microsoft AI Research Released 1 Million Synthetic Instruction",
+    "snippet": "We introduce AgentInstruct, an extensible agentic framework for automatically creating large amounts of diverse and high-quality synthetic data.",
+    "host_name": "www.reddit.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.ml4devs.com/what-is/synthetic-data-generation",
+    "name": "Synthetic Data Generation for LLM Fine-Tuning - ML4Devs",
+    "snippet": "Understand how LLMs generate training data: self-instruct, knowledge distillation, evol-instruct, and why quality filtering matters more than volume. Missing:  trajectory  | Show results with:",
+    "host_name": "www.ml4devs.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  }
+]

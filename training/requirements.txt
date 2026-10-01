@@ -1,0 +1,19 @@
+# Thursday AI — Kaggle T4×2 fine-tune requirements
+# These are installed in-cell by the notebook via pip, but pinning here
+# for reproducibility.
+
+# Core fine-tuning stack — versions known to work on Kaggle T4 in late 2024 / 2025
+unsloth @ git+https://github.com/unslothai/unsloth.git
+trl>=0.8.0,<0.9.0
+peft>=0.7.1
+accelerate>=0.27.0
+bitsandbytes>=0.43.1
+transformers>=4.45.0
+datasets>=2.20.0
+
+# Hub upload + GGUF conversion
+huggingface_hub>=0.25.0
+gguf>=0.6.0
+
+# Misc
+torch>=2.1.0

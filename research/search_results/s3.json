@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://osu-nlp-group.github.io/Mind2Web",
+    "name": "Mind2Web: Towards a Generalist Agent for the Web",
+    "snippet": "Mind2Web is a dataset for developing and evaluating generalist agents for the web that can follow language instructions to complete complex tasks on any ... Missing:  WebVoyager  SeeAct",
+    "host_name": "osu-nlp-group.github.io",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/OSU-NLP-Group/Mind2Web",
+    "name": "Mind2Web: Towards a Generalist Agent for the Web - GitHub",
+    "snippet": "Mind2Web is the first dataset for developing and evaluating generalist agents for the web. With over 2,000 open-ended tasks collected from 137 websites ... Missing:  WebVoyager  | Show results with:",
+    "host_name": "github.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://huggingface.co/datasets/osunlp/Mind2Web",
+    "name": "osunlp/Mind2Web · Datasets at Hugging Face",
+    "snippet": "Mind2Web is a dataset for developing and evaluating generalist agents for the web that can follow language instructions to complete complex ... Missing:  WebVoyager  SeeAct",
+    "host_name": "huggingface.co",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://arxiv.org/abs/2306.06070",
+    "name": "[2306.06070] Mind2Web: Towards a Generalist Agent for the Web",
+    "snippet": "We introduce Mind2Web, the first dataset for developing and evaluating generalist agents for the web that can follow language instructions to ... Missing:  WebVoyager  SeeAct",
+    "host_name": "arxiv.org",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.kaggle.com/datasets/thedevastator/mind2web-generalist-agents-for-web-tasks",
+    "name": "Mind2Web: Generalist Agents for Web Tasks - Kaggle",
+    "snippet": "The Mind2Web dataset is a valuable resource for researchers and developers working on creating generalist agents capable of performing complex web tasks based ... Missing:  format  | Show results with:",
+    "host_name": "www.kaggle.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://tldr.takara.ai/p/2306.06070",
+    "name": "Mind2Web: Towards a Generalist Agent for the Web",
+    "snippet": "We introduce Mind2Web, the first dataset for developing and evaluating generalist agents for the web that can follow language instructions to complete ... Missing:  format  | Show results with:",
+    "host_name": "tldr.takara.ai",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://proceedings.neurips.cc/paper_files/paper/2023/file/5950bf290a1570ea401bf98882128160-Paper-Datasets_and_Benchmarks.pdf",
+    "name": "[PDF] MIND2WEB: Towards a Generalist Agent for the Web",
+    "snippet": "We introduce MIND2WEB, the first dataset for developing and evaluating generalist agents for the web that can follow language instructions to complete ... Missing:  WebVoyager  SeeAct",
+    "host_name": "proceedings.neurips.cc",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://osu-nlp-group.github.io/SeeAct",
+    "name": "SeeAct - GitHub Pages",
+    "snippet": "With online evaluation on the Mind2Web dataset, SeeAct can successfully complete up to 50% of tasks on live websites given an oracle action grounding method. Missing:  format  | Show results with:",
+    "host_name": "osu-nlp-group.github.io",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  }
+]

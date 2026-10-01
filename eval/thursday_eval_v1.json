@@ -1,0 +1,75 @@
+{
+  "_meta": {
+    "name": "thursday_eval_v1",
+    "version": "0.1.0",
+    "description": "50-task evaluation benchmark for Thursday AI v0.1. Each task has a goal, a success predicate, and a max-steps budget. Scorer (to be implemented in M4) runs each task in a sandboxed VM and checks the predicate.",
+    "categories": ["alarm", "app_launch", "browser_search", "file_ops", "screen_understand", "delegate_webai", "composition"]
+  },
+  "tasks": [
+    {
+      "id": "eval_001",
+      "category": "alarm",
+      "goal": "Set an alarm for 7 am tomorrow.",
+      "success_predicate": "An alarm exists in the OS clock app set for 07:00 the following day.",
+      "max_steps": 4,
+      "os": ["linux", "windows", "macos"]
+    },
+    {
+      "id": "eval_002",
+      "category": "app_launch",
+      "goal": "Open Firefox.",
+      "success_predicate": "A Firefox window is focused within 5 seconds.",
+      "max_steps": 2,
+      "os": ["linux", "windows", "macos"]
+    },
+    {
+      "id": "eval_003",
+      "category": "browser_search",
+      "goal": "What's the capital of Mongolia?",
+      "success_predicate": "Final reply contains 'Ulaanbaatar' (case-insensitive).",
+      "max_steps": 6,
+      "os": ["linux", "windows", "macos"]
+    },
+    {
+      "id": "eval_004",
+      "category": "screen_understand",
+      "goal": "What's on my screen right now?",
+      "success_predicate": "Model called screenshot() and produced a one-line description matching the visible window title.",
+      "max_steps": 4,
+      "os": ["linux", "windows", "macos"]
+    },
+    {
+      "id": "eval_005",
+      "category": "delegate_webai",
+      "goal": "Explain how transformers work in one paragraph.",
+      "success_predicate": "Model called paste_to_webai and finished with a paragraph containing 'attention'.",
+      "max_steps": 4,
+      "os": ["linux", "windows", "macos"]
+    },
+    {
+      "id": "eval_006",
+      "category": "file_ops",
+      "goal": "What's in my Downloads folder?",
+      "success_predicate": "Model called list_dir with '~/Downloads' and produced a list of files in the summary.",
+      "max_steps": 4,
+      "os": ["linux", "windows", "macos"]
+    },
+    {
+      "id": "eval_007",
+      "category": "composition",
+      "goal": "Turn the volume down to 20 and open Spotify.",
+      "success_predicate": "Volume is 20% AND a Spotify window is focused.",
+      "max_steps": 6,
+      "os": ["linux", "windows", "macos"]
+    },
+    {
+      "id": "eval_008",
+      "category": "browser_search",
+      "goal": "Find that YouTube video I described — a guy building a wooden canoe in his backyard, mostly silent, around 20 minutes long.",
+      "success_predicate": "Browser navigates to a youtube.com/watch URL whose title contains 'canoe'.",
+      "max_steps": 12,
+      "os": ["linux", "windows", "macos"]
+    }
+  ],
+  "_notes": "This is a 8-task seed. The full 50-task benchmark will be filled in M4. Each task's success_predicate is checked by the scorer (DOM/file/OCR)."
+}

@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Generated datasets (keep schema, examples, templates; ignore generated mass)
+data/processed/*.jsonl
+!data/processed/.gitkeep
+
+# Local llama.cpp clone (used by training notebook)
+llama.cpp/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Kaggle
+.kaggle/
+
+# Models (GGUFs, adapters) — keep them in HuggingFace Hub, not here
+*.gguf
+*.bin
+*.safetensors
+*.pt
+*.pth
+adapter_model.bin
+adapter_config.json
+!data/schema/*.json
+
+# Logs
+*.log

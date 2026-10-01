@@ -1,0 +1,318 @@
+{
+  "_meta": {
+    "name": "thursday-ai-tool-surface",
+    "version": "0.1.0",
+    "description": "Thursday AI's platform-agnostic action vocabulary. 26 tools. Each is dispatched by the runtime to OS-specific primitives (pyautogui, xdotool, AppleScript, Win UI Automation). One tool call per assistant turn.",
+    "base_model": "Qwen/Qwen2.5-3B-Instruct",
+    "chat_template": "qwen2-tool-call",
+    "license": "Apache-2.0"
+  },
+  "tools": [
+    {
+      "name": "open_app",
+      "description": "Launch a desktop application by friendly name. The runtime resolves the name to the OS-appropriate launcher (e.g. 'firefox' -> firefox.exe / firefox / open -a Firefox). Use this when the user wants to start an app.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "app_name": {"type": "string", "description": "Friendly application name, e.g. 'firefox', 'vscode', 'clocks', 'files'."},
+          "args": {"type": "array", "items": {"type": "string"}, "description": "Optional command-line arguments to pass to the app."}
+        },
+        "required": ["app_name"]
+      }
+    },
+    {
+      "name": "close_window",
+      "description": "Close the currently focused window. Equivalent to Alt+F4 (Win/Linux) or Cmd+W (macOS). Destructive: if the window has unsaved work, the runtime asks the user to confirm.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "force": {"type": "boolean", "default": false, "description": "If true, skip user confirmation. Reserved for cases where the model has just verified the window is safe to close."}
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "switch_app",
+      "description": "Bring an application to the foreground by name. Use this instead of multiple Alt+Tab calls.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "app_name": {"type": "string", "description": "Friendly name of the application to bring to the foreground."}
+        },
+        "required": ["app_name"]
+      }
+    },
+    {
+      "name": "minimize_window",
+      "description": "Minimize the active window to the taskbar / dock.",
+      "parameters": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+      "name": "click",
+      "description": "Click at screen coordinates (x, y) measured in pixels from the top-left of the primary display. Always call screenshot() first to identify the target coordinates. The runtime will use pyautogui on all OSes; on Linux it can fall back to xdotool.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "x": {"type": "integer", "minimum": 0, "description": "X coordinate in pixels."},
+          "y": {"type": "integer", "minimum": 0, "description": "Y coordinate in pixels."},
+          "button": {"type": "string", "enum": ["left", "right", "middle"], "default": "left"},
+          "double": {"type": "boolean", "default": false, "description": "If true, perform a double-click."}
+        },
+        "required": ["x", "y"]
+      }
+    },
+    {
+      "name": "drag",
+      "description": "Drag the mouse from (x1, y1) to (x2, y2). Useful for sliders, drag-and-drop, and resizing windows.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "x1": {"type": "integer", "minimum": 0},
+          "y1": {"type": "integer", "minimum": 0},
+          "x2": {"type": "integer", "minimum": 0},
+          "y2": {"type": "integer", "minimum": 0}
+        },
+        "required": ["x1", "y1", "x2", "y2"]
+      }
+    },
+    {
+      "name": "type_text",
+      "description": "Type a string into the currently focused input field. The text is sent as a sequence of keypresses, so existing content is appended unless the user has selected-all first. For replacing content, call key_press(keys='ctrl+a') first.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {"type": "string", "description": "The text to type."}
+        },
+        "required": ["text"]
+      }
+    },
+    {
+      "name": "key_press",
+      "description": "Press a single key or a hotkey combination. Use pyautogui-style names: 'enter', 'esc', 'tab', 'space', 'backspace', 'ctrl+c', 'ctrl+v', 'cmd+shift+4', 'alt+f4', 'win+d', etc. On macOS, 'cmd' is the meta key.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "keys": {"type": "string", "description": "Key or hotkey combo, e.g. 'enter', 'ctrl+s', 'cmd+c'."}
+        },
+        "required": ["keys"]
+      }
+    },
+    {
+      "name": "scroll",
+      "description": "Scroll the focused window by N wheel-notches. Positive scrolls down, negative scrolls up. Use this to navigate long pages.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "amount": {"type": "integer", "default": 3, "description": "Number of wheel-notches to scroll. Negative scrolls up."}
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "screenshot",
+      "description": "Capture the current screen. Returns the path to the saved PNG plus OCR'd text and the title of the focused window. ALWAYS call this before clicking or typing into a UI you cannot see, so you have current coordinates.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "object",
+            "description": "Optional sub-region of the screen to capture instead of the full screen.",
+            "properties": {
+              "x": {"type": "integer", "minimum": 0},
+              "y": {"type": "integer", "minimum": 0},
+              "w": {"type": "integer", "minimum": 1},
+              "h": {"type": "integer", "minimum": 1}
+            },
+            "required": ["x", "y", "w", "h"]
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "list_dir",
+      "description": "List files and subdirectories in a directory. Returns a JSON array of {name, type:'file'|'dir', size_bytes}. Use this to explore the filesystem before read_file or write_file.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {"type": "string", "description": "Absolute path to a directory. Use '~' for the user home dir (the runtime expands it)."}
+        },
+        "required": ["path"]
+      }
+    },
+    {
+      "name": "read_file",
+      "description": "Read up to 64 KB of a text file. Returns the content as a string. For binary files, use run_shell with a tool like 'file' or 'xxd'.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {"type": "string"},
+          "offset": {"type": "integer", "minimum": 0, "default": 0, "description": "Byte offset to start reading from."},
+          "limit": {"type": "integer", "minimum": 1, "default": 65536, "description": "Max bytes to read."}
+        },
+        "required": ["path"]
+      }
+    },
+    {
+      "name": "write_file",
+      "description": "Write text to a file. Overwrites if the file exists. DESTRUCTIVE: the runtime will ask the user to confirm via voice before executing, unless the user has pre-approved the path in their config.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {"type": "string"},
+          "content": {"type": "string"}
+        },
+        "required": ["path", "content"]
+      }
+    },
+    {
+      "name": "run_shell",
+      "description": "Run a shell command and return the exit code plus combined stdout/stderr (truncated to 8 KB). DESTRUCTIVE if the command mutates state (rm, mv, sudo, etc.). The runtime confirms with the user unless the command matches a per-session allowlist (ls, cat, pwd, git status, etc.).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "cmd": {"type": "string", "description": "Shell command. Use the OS-appropriate shell (bash on Linux/macOS, cmd or powershell on Windows)."},
+          "cwd": {"type": "string", "description": "Working directory. Defaults to the user's home."},
+          "timeout_s": {"type": "integer", "default": 30, "minimum": 1, "maximum": 300}
+        },
+        "required": ["cmd"]
+      }
+    },
+    {
+      "name": "browser_open",
+      "description": "Open the user's default web browser. If a URL is given, navigate to it; otherwise open the homepage / new-tab page. Returns the resulting page title and URL.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {"type": "string", "description": "Optional URL to navigate to. Must be a fully-qualified URL with scheme."}
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "browser_search",
+      "description": "Run a search query in the browser's default search engine and return the resulting page URL plus the top 5 result titles and URLs. Faster than driving the search bar by hand.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {"type": "string"},
+          "engine": {"type": "string", "enum": ["duckduckgo", "google", "bing", "brave"], "default": "duckduckgo"}
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "browser_navigate",
+      "description": "Navigate the active browser tab to a URL. Use this after browser_open to move to a specific page.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {"type": "string"}
+        },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "browser_close_tab",
+      "description": "Close the active browser tab.",
+      "parameters": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+      "name": "paste_to_webai",
+      "description": "Submit a query to Thursday AI's local web-search subsystem (uses the z-ai-web-dev-sdk web_search under the hood). Returns structured search results without opening a browser. Use this when the user just wants information quickly.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {"type": "string"},
+          "num": {"type": "integer", "default": 5, "minimum": 1, "maximum": 20}
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "read_webai_response",
+      "description": "Fetch the textual content of a URL via Thursday AI's web_reader subsystem. Returns the cleaned article / page text. Faster and cheaper than driving a browser. Use this after browser_search or paste_to_webai to extract page content.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {"type": "string"}
+        },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "set_alarm",
+      "description": "Create an alarm clock entry at the specified time. Wraps gnome-clocks on Linux, Clock.app on macOS, and Windows Alarms on Windows. Time is local to the system timezone.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "hour": {"type": "integer", "minimum": 0, "maximum": 23, "description": "Hour in 24h format."},
+          "minute": {"type": "integer", "minimum": 0, "maximum": 59},
+          "label": {"type": "string", "description": "Optional human-readable label for the alarm."}
+        },
+        "required": ["hour", "minute"]
+      }
+    },
+    {
+      "name": "set_volume",
+      "description": "Set the system master volume. Wraps amixer/pactl on Linux, osascript on macOS, CoreAudio on Windows.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "percent": {"type": "integer", "minimum": 0, "maximum": 100}
+        },
+        "required": ["percent"]
+      }
+    },
+    {
+      "name": "toggle_mute",
+      "description": "Toggle mute on the system audio output.",
+      "parameters": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+      "name": "open_url",
+      "description": "Open a URL in the user's default handler. For http(s) URLs this is the browser; for mailto: it is the mail client; for file:// it is the file manager. Use browser_open + browser_navigate if you need to control the browser specifically.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {"type": "string"}
+        },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "notify_user",
+      "description": "Send a desktop notification (libnotify on Linux, NSUserNotification on macOS, Windows toast). Use this to confirm a background task finished, or to remind the user without speaking aloud.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {"type": "string"},
+          "body": {"type": "string", "default": ""}
+        },
+        "required": ["title"]
+      }
+    },
+    {
+      "name": "ask_user",
+      "description": "Ask the user a clarifying question via voice. Blocks until the user responds. Use this when the goal is ambiguous, when a destructive action needs confirmation, or when the model genuinely does not know how to proceed.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "question": {"type": "string"}
+        },
+        "required": ["question"]
+      }
+    },
+    {
+      "name": "finish",
+      "description": "Signal that the goal is complete. Includes a final summary for the user (kept to ≤ 2 lines unless the user explicitly asked for a long summary). The orchestrator speaks the summary via TTS and clears the working history.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "summary": {"type": "string", "description": "Final summary to speak to the user. Keep ≤ 2 lines."}
+        },
+        "required": ["summary"]
+      }
+    }
+  ]
+}

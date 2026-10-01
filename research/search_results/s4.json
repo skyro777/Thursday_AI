@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://docs.vllm.ai/en/v0.11.1/features/tool_calling",
+    "name": "Tool Calling - vLLM Documentation",
+    "snippet": "Hermes, Mistral and Llama models have tool-compatible chat templates in their tokenizer_config.json files, but you can specify a custom template. Missing:  jsonl  | Show results with:",
+    "host_name": "docs.vllm.ai",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/hanXen/vllm-qwen2.5-coder-tool-parser",
+    "name": "Qwen2.5-Coder <tools> Tag Parser for vLLM - GitHub",
+    "snippet": "Qwen 2.5 Coder tool calling. Coder models do not use the hermes  format. achieve 100% format compliance. JSON arrays, JSONL, Chat template injects tool ...",
+    "host_name": "github.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://qwen.readthedocs.io/en/v2.0/framework/function_call.html",
+    "name": "Function Calling - Qwen",
+    "snippet": "The generated tool call may be invalid JSON-formatted string. The templates we have used for transformers and Ollama are variants of the Nous Research's Hermes ... Missing:  jsonl  | Show results with:",
+    "host_name": "qwen.readthedocs.io",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/vllm-project/vllm/issues/32926",
+    "name": "[Feature]: Add dedicated tool parser for Qwen2.5-Coder models",
+    "snippet": "Qwen2.5-Coder has no native tool calling format — unlike hermes/llama models, it was not trained on tool call tokens. A chat template injects ... Missing:  jsonl  | Show results with:",
+    "host_name": "github.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/ollama/comments/1wpu9cn/i_benchmarked_toolcall_reliability_on_qwen25coder",
+    "name": "I benchmarked tool-call reliability on qwen2.5-coder against pi",
+    "snippet": "I benchmarked tool-call reliability on qwen2.5-coder against pi, Hermes, and Goose - all three got 0% · Polyglot: 39% tasks completed, 0/18 runs ... Missing:  format  jsonl",
+    "host_name": "www.reddit.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://docs.vllm.ai/en/latest/features/tool_calling",
+    "name": "Tool Calling - vLLM documentation",
+    "snippet": "Hermes, Mistral and Llama models have tool-compatible chat templates in their tokenizer_config.json files, but you can specify a custom template. This argument ... Missing:  jsonl  | Show results with:",
+    "host_name": "docs.vllm.ai",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://huggingface.co/froggeric/Qwen-Fixed-Chat-Templates/discussions/45",
+    "name": "froggeric/Qwen-Fixed-Chat-Templates · Fix: tool calls silently",
+    "snippet": "The server's tool-call grammar triggers on the  opener but its parser expects a JSON object (Hermes format) inside. es the native Hermes JSON ... Missing:  Qwen2  | Show results with:",
+    "host_name": "huggingface.co",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://qwen.readthedocs.io/en/latest/getting_started/concepts.html",
+    "name": "Key Concepts - Qwen - Read the Docs",
+    "snippet": "Qwen3 supports tool calling or function calling and uses a template akin to Hermes. The models support parallel tool calling and mulit-turn/multi-step tool ... Missing:  jsonl  | Show results with:",
+    "host_name": "qwen.readthedocs.io",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  }
+]

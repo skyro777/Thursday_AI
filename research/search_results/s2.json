@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://developers.openai.com/api/docs/guides/fine-tuning-best-practices",
+    "name": "Fine-tuning best practices | OpenAI API",
+    "snippet": "Make sure your all of your training examples are in the same format, as expected for inference. Iterating on data quantity. Once you're satisfied with the ...",
+    "host_name": "developers.openai.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://developers.openai.com/api/docs/guides/supervised-fine-tuning",
+    "name": "Supervised fine-tuning | OpenAI API",
+    "snippet": "Supervised fine-tuning (SFT) lets you train an OpenAI model with examples for your specific use. Use historical data, expert data, logged data,",
+    "host_name": "developers.openai.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://odsc.medium.com/10-datasets-for-fine-tuning-large-language-models-d27f5a9b2a9a",
+    "name": "10 Datasets for Fine-Tuning Large Language Models | by ODSC",
+    "snippet": "Utilizing the Open-Platypus dataset for fine-tuning LLMs is immensely beneficial in enhancing their overall capabilities. By exposing LLMs to a ...",
+    "host_name": "odsc.medium.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://rcpedia.stanford.edu/blog/2025/11/07/fine-tuning-open-source-models",
+    "name": "Fine-Tuning Open Source Models",
+    "snippet": "Fine-tuning turns a general-purpose language model into a specialist. By preparing a labeled dataset, uploading it to Together AI for training, ... Missing:  Interpreter  | Show results with:",
+    "host_name": "rcpedia.stanford.edu",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://labelstud.io/blog/fine-tuning-openai-models-a-guide-with-wikipedia-data",
+    "name": "Fine-Tuning OpenAI Models: A Guide with Wikipedia Data",
+    "snippet": "With OpenAI's new fine-tuning feature, you can tune their models using domain-specific data, instructions, or even custom formats.",
+    "host_name": "labelstud.io",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://ai.riera.co.uk/knowledge_base/patterns/fine-tuning-open-models",
+    "name": "Fine-tuning Open Models - Home-Office Automation & AI Hub",
+    "snippet": "Fine-tuning is the process of continuing the training of a pre-trained language model on a curated dataset to adapt its behaviour, tone, knowledge, or task ...",
+    "host_name": "ai.riera.co.uk",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://grooper.com/blog_posts/how-to-fine-tune-llm",
+    "name": "How to Fine Tune LLMs for Your Documents and Data - Grooper",
+    "snippet": "Fine-tuning is a retraining step and implies that the training data will not change. Fine-tuning is used more to tailor the model behavior ...",
+    "host_name": "grooper.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://forum.opennmt.net/t/best-practices-for-fine-tuning-opennmt-models-with-limited-data/5887",
+    "name": "Best Practices for Fine-Tuning OpenNMT Models with Limited",
+    "snippet": "For small dataset use small batches: 16-32, A learning rate of 0.00001 to 0.001 could be a good starting point. A dropout rate of around 0.1–0. ...",
+    "host_name": "forum.opennmt.net",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  }
+]
