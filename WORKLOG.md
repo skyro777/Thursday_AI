@@ -156,3 +156,34 @@ Stage Summary:
 - User should re-download the notebook from GitHub OR manually edit the 3 cells in Kaggle
 - After re-running cell 1 (deps), the sanity-check line will print versions: "trl X.Y.Z | transformers X.Y.Z | peft X.Y.Z"
 - After cell 1 succeeds, re-run cells 5 and 7 — both should now work without warnings or errors
+
+---
+Task ID: M0-fix-3
+Agent: Main Builder (GLM 5.2)
+Task: Fix ImportError: cannot import name '_maybe_view_chunk_cat' from 'torch._utils'
+
+Work Log:
+- User fetched raw error.txt from GitHub (they accidentally committed it to repo)
+- Root cause: NOT a TRL issue — a torch/transformers version mismatch
+  - Kaggle has torch 2.5.x preinstalled
+  - My previous fix used `pip install --upgrade --force-reinstall "trl>=0.9.0,<0.12.0"`
+  - TRL's deps triggered transformers upgrade to 4.51+
+  - transformers 4.51 imports torch.distributed.tensor._ops → torch.distributed._functional_collectives._maybe_view_chunk_cat
+  - _maybe_view_chunk_cat was added in torch 2.6 — doesn't exist in Kaggle's torch 2.5.x
+  - Chain: peft → transformers.auto → modeling_auto → auto_factory → generation.utils → distributed.fsdp → tensor_parallel → torch.distributed.tensor._ops → _functional_collectives → BOOM
+
+Fix applied:
+- Pin transformers to 4.46.x explicitly (>=4.46.0,<4.47.0) — compatible with torch 2.5.x
+- Downgrade TRL to 0.8.6 with --no-deps so it can't re-upgrade transformers
+  (TRL 0.8.6 has both SFTConfig and SFTTrainer — Unsloth's known-good version)
+- Pin peft/accelerate/bitsandbytes with --no-deps for same reason
+- Add comprehensive sanity-check imports at end of deps cell: torch, trl, transformers, peft, accelerate, bitsandbytes + actual SFTTrainer/SFTConfig/DataCollatorForSeq2Seq/PeftModel imports
+- Removed error.txt from repo (was accidentally committed by user)
+- Added error.txt + *.error to .gitignore
+
+Stage Summary:
+- Commit 7191393 pushed to main
+- User should: re-download notebook OR manually replace cell 1 (deps install) with the new content
+- After installing, the cell will print versions: torch 2.5.x | transformers 4.46.x | trl 0.8.6 | peft 0.13.x | accelerate 0.34.x | bnb 0.43.x
+- Then "OK: all imports succeeded."
+- If even this doesn't work, the fallback is to skip Unsloth entirely and use vanilla transformers+peft+trl 0.8.6 stack — but Unsloth gives ~2x speedup so worth trying first
