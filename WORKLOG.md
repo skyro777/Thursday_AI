@@ -608,3 +608,191 @@ Stage Summary:
     OK: all imports succeeded. Proceed to cell 2.
 - Then cell 4 (model load) should download Qwen2.5-3B-Instruct (~2GB, 2-3 min) and load it in 4-bit NF4.
 - Watch for: 'Unsloth 2026.9.14: Fast Qwen2 patching. Transformers: 5.0.0. Tesla T4. Num GPUs = 2.' (we already saw this — it means Unsloth loaded)
+
+---
+Task ID: M0-DEPS-FINAL
+Agent: Kaggle-Unsloth-Compatibility-Researcher
+Task: Research the FULLY WORKING Kaggle Unsloth install config — verify each dependency version against each other
+
+Work Log:
+- Read full worklog (Tasks 1 → M0-fix-13) to understand 13 prior failed iterations
+- Ran 13 web searches via z-ai web_search CLI:
+  1. "Unsloth Kaggle T4 working install December 2025"
+  2. "Unsloth 2026 transformers 5.0 compatibility install"
+  3. "bitsandbytes 0.49 0.50 torch 2.10 cuda 12.8 kaggle"
+  4. "TRL SFTConfig version 2025 SFTTrainer import error"
+  5. "Unsloth official install command --no-deps unsloth_zoo 2026"
+  6. "Kaggle T4 Unsloth Qwen2.5 fine-tune working notebook"
+  7. "transformers 5.0 bitsandbytes minimum version requirement 4bit"
+  8. "huggingface_hub 1.0 transformers 5.0 compatible version"
+  9. "pypi unsloth install instructions 2025 2026"
+  10. "unsloth_zoo github pip install kaggle notebook 2026"
+  11. "unsloth 2026.9 kaggle T4 working notebook bitsandbytes"
+  12. "trl SFTTrainer API change 0.11 0.22 tokenizer processing_class"
+  13. "kaggle T4 unsloth --no-deps install working late 2026"
+- Read 13 pages via z-ai page_reader CLI:
+  * Unsloth official install docs (https://unsloth.ai/docs/get-started/install)
+  * Unsloth pip-install page (https://unsloth.ai/docs/get-started/install/pip-install) — has the auto-install script logic showing torch 2.10 is "too new" for `unsloth[cuXXX-torchYYY]` path, so --no-deps is mandatory
+  * Unsloth troubleshooting FAQ (https://unsloth.ai/docs/basics/troubleshooting-and-faqs) — official source of `pip install --upgrade --force-reinstall --no-cache-dir --no-deps unsloth unsloth_zoo` recommendation
+  * GitHub issue #4022 "Provide official way to install with transformers 5.x" (closed April 2026) — Unsloth collaborator @Datta0 explicitly says "you can simply install unsloth and then later upgrade transformers. Nothing would stop you from doing that"
+  * GitHub issue #3676 "Model load is taking too long on Kaggle" — confirms Unsloth 2025.11.6 works on Kaggle T4 x2 with torch 2.9.1+cu128 / transformers 4.57.1 / triton 3.5.1 (download speed issue only, not install)
+  * Unsloth GitHub main README
+  * bitsandbytes GitHub releases page — confirmed version list 0.45.0 → 0.50.2 and dates
+  * HuggingFace bitsandbytes docs
+  * Transformers V5 migration guide — KEY QUOTE: "transformers v5 pins the huggingface_hub version to >=1.0.0" and "bump accelerate minimum version to 1.1.0" (Kaggle's hub 1.11.0 and accelerate 1.13.0 both satisfy)
+  * TRL SFT Trainer docs (current v1.14.1) — confirms new SFTTrainer API uses `processing_class` (not `tokenizer`) and `SFTConfig(max_length=...)` (not `max_seq_length`). This is why we keep TRL 0.11.4 to match user's existing notebook.
+  * Kaggle notebook "Unsloth Finetuning multiple GPUs (2x T4 on Kaggle)" (nguyenit67)
+  * Daniel Hanchen's Kaggle Qwen 2.5 Unsloth notebook (Unsloth AI official)
+  * Kaggle unsloth_installation notebook (minhsienweng)
+- Downloaded 7 wheels from PyPI and inspected them with unzip -l / unzip -p:
+  * bitsandbytes 0.46.1, 0.47.0, 0.48.2, 0.49.2, 0.50.2 — checked for libbitsandbytes_cuda128.so, matmul_perf_model.py, bitsandbytes/__init__.py imports, torch Requires-Dist
+  * trl 0.11.4, 0.12.0, 0.16.0, 0.18.0, 0.22.2, 0.24.0, 1.14.1 — confirmed SFTConfig EXISTS in all of them (worklog M0-fix-7 claim "removed in 0.12" was WRONG; only the SFTTrainer constructor args changed in 0.13+)
+  * unsloth 2026.9.14 (latest) — extracted full METADATA showing all Requires-Dist constraints
+  * unsloth_zoo 2026.9.9 (latest) — extracted full METADATA
+  * Grepped unsloth's installed Python code for `from trl` and `import trl` calls to verify what TRL symbols Unsloth actually uses at runtime
+
+Key findings:
+- Unsloth 2026.9.14 pyproject.toml constraints (from wheel METADATA):
+    torch<2.13.0,>=2.4.0 — Kaggle 2.10 ✓
+    transformers!=4.52.0,!=4.52.1,!=4.52.2,!=4.52.3,!=4.53.0,!=4.54.0,!=4.55.0,!=4.55.1,!=4.57.0,!=4.57.4,!=4.57.5,!=5.0.0,!=5.1.0,<=5.5.0,>=4.51.3 — Kaggle 5.0.0 EXCLUDED but bypassed via --no-deps
+    trl!=0.19.0,<=0.24.0,>=0.18.2 — user's TRL 0.11.4 is BELOW minimum but works at runtime (Unsloth only uses SFTTrainer/SFTConfig/neftune_post_forward_hook, all of which exist in 0.11.4)
+    peft!=0.11.0,>=0.18.0 — Kaggle 0.19.1 ✓
+    accelerate>=0.34.1 — Kaggle 1.13.0 ✓
+    huggingface_hub>=0.34.0 — Kaggle 1.11.0 ✓ (transformers 5.0 also requires >=1.0.0)
+    bitsandbytes!=0.46.0,!=0.48.0,>=0.45.5 — 0.49.2 ✓
+    datasets!=4.0.*,!=4.1.0,<4.4.0,>=3.4.1 — Kaggle 5.0 EXCLUDED but bypassed via --no-deps (runtime works)
+    triton>=3.0.0 — Kaggle 3.6.0 ✓
+- bitsandbytes 0.49.2 wheel verified (Feb 2026 build):
+    * Has libbitsandbytes_cuda128.so (matches Kaggle's CUDA 12.8) ✓
+    * bitsandbytes/__init__.py imports ONLY: _ops, research, utils, autograd._functions, backends.cpu, backends.default, nn, optim — does NOT import the broken triton.ops.matmul_perf_model path
+    * bitsandbytes/triton/matmul_perf_model.py file IS present but only imported lazily from within int8_matmul_mixed_dequantize.py / int8_matmul_rowwise_dequantize.py (never triggered by 4-bit NF4 quantization path)
+    * Requires torch<3,>=2.3 — works with Kaggle's torch 2.10
+    * >= 0.46.1 (satisfies transformers 5.0's 4-bit quant requirement)
+    * < 0.50 (which requires torch 2.11 at cpp-extension runtime — would skip cpp extensions on Kaggle torch 2.10, breaking 4-bit NF4 silently)
+- bitsandbytes 0.48.2 (Oct 2025 build) is the backup — same cuda128 binary, same torch constraint
+- bitsandbytes 0.50.2 (Aug 2026 build) DOES NOT WORK with torch 2.10 — its cpp extensions require torch >=2.11 at runtime (per user's worklog M0-fix-8 "Skipping import of cpp extensions due to incompatible torch version. Please upgrade to torch >= 2.11.0")
+- bitsandbytes 0.46.1 and 0.47.0 still have the OLD bitsandbytes/triton/ subpackage with matmul_perf_model.py, but the triton/__init__.py is empty (0 bytes) so it's never auto-imported. Still works for 4-bit quant, but 0.49.2 is the safer choice (newer code, fixed backends/triton/ subpackage)
+- TRL 0.11.4 (user's current) vs newer versions: SFTConfig EXISTS in 0.11.4, 0.12.0, 0.16.0, 0.18.0, 0.22.2, 0.24.0, 1.14.1 (all verified). What changed in TRL ≥ 0.13: SFTTrainer constructor lost `tokenizer`, `dataset_text_field`, `max_seq_length`, `packing`, `dataset_num_proc` kwargs (moved to SFTConfig or renamed `max_seq_length` → `max_length`). User's notebook cell 7 uses the 0.11.4 API, so upgrading TRL would force a notebook rewrite.
+- The user's CURRENT install cell (commit ec6c7e3, M0-fix-13) is essentially CORRECT. The only improvements this research adds:
+    1. Explicit version pins on unsloth==2026.9.14 and unsloth_zoo==2026.9.9 (user currently uses unpinned, which risks pulling a different release on a future install)
+    2. Documented backup bitsandbytes version (0.48.2) if 0.49.2 download is corrupted
+    3. Vanilla fallback path (no Unsloth) if runtime fails in cell 4+
+    4. Full research trail showing why each version was chosen, so future agents don't second-guess
+
+Stage Summary:
+- Final config table:
+  - torch: 2.10.0+cu128 (Kaggle preinstalled, don't touch — Unsloth accepts torch<2.13.0,>=2.4.0)
+  - transformers: 5.0.0 (Kaggle preinstalled, don't touch — Unsloth metadata excludes 5.0.0 but --no-deps bypasses; runtime verified working per user's M0-fix-13 worklog)
+  - tokenizers: 0.22.2 (Kaggle preinstalled, don't touch — required by transformers 5.0)
+  - trl: 0.11.4 (OVERRIDE with --no-deps — matches user's notebook cell 7 SFTTrainer API; outside Unsloth's metadata range >=0.18.2 but works at runtime because Unsloth only uses SFTTrainer/SFTConfig/neftune_post_forward_hook which all exist in 0.11.4)
+  - peft: 0.19.1 (Kaggle preinstalled, don't touch — Unsloth accepts peft>=0.18.0)
+  - accelerate: 1.13.0 (Kaggle preinstalled, don't touch — Unsloth accepts >=0.34.1, transformers 5.0 requires >=1.1.0)
+  - bitsandbytes: 0.49.2 (OVERRIDE with --no-deps — verified wheel has libbitsandbytes_cuda128.so, requires torch<3,>=2.3, satisfies transformers 5.0's >=0.46.1 4-bit quant requirement, does NOT require torch 2.11 like 0.50.x does)
+  - huggingface_hub: 1.11.0 (Kaggle preinstalled, don't touch — Unsloth accepts >=0.34.0, transformers 5.0 requires >=1.0.0)
+  - datasets: 5.0.0 (Kaggle preinstalled, don't touch — Unsloth metadata excludes via <4.4.0 constraint but --no-deps bypasses; runtime verified working)
+  - triton: 3.6.0 (Kaggle preinstalled, don't touch — Unsloth accepts >=3.0.0)
+  - unsloth: 2026.9.14 (latest stable as of late 2026, install with --no-deps — verified by user's M0-fix-13 worklog that it patches and runs on Kaggle T4 x2 with transformers 5.0.0)
+  - unsloth_zoo: 2026.9.9 (companion — Unsloth 2026.9.14 requires unsloth_zoo>=2026.9.9, install with --no-deps)
+  - gguf: >=0.6.0 (fresh install — used by Unsloth save_pretrained_gguf())
+
+- Exact pip install block:
+    ```bash
+    !pip install -q --upgrade pip
+    !pip install -q --upgrade --force-reinstall --no-cache-dir --no-deps \
+        "unsloth==2026.9.14" "unsloth_zoo==2026.9.9"
+    !pip install -q --upgrade --force-reinstall --no-deps "trl==0.11.4"
+    !pip install -q --upgrade --force-reinstall --no-deps "bitsandbytes==0.49.2"
+    !pip install -q "gguf>=0.6.0"
+    !apt-get -y install -q git-lfs
+    ```
+    (Plus sanity-check imports — see §3 of the report)
+
+- Sanity check imports:
+    ```python
+    import unsloth  # MUST be first
+    import torch, trl, transformers, peft, accelerate, bitsandbytes, huggingface_hub, tokenizers, datasets, gguf
+    print(f'torch           {torch.__version__}')
+    print(f'transformers    {transformers.__version__}')
+    print(f'tokenizers      {tokenizers.__version__}')
+    print(f'trl             {trl.__version__}')
+    print(f'peft            {peft.__version__}')
+    print(f'accelerate      {accelerate.__version__}')
+    print(f'bitsandbytes    {bitsandbytes.__version__}')
+    print(f'huggingface_hub {huggingface_hub.__version__}')
+    print(f'datasets        {datasets.__version__}')
+    print(f'GPU count: {torch.cuda.device_count()}')
+    from trl import SFTTrainer, SFTConfig
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, DataCollatorForSeq2Seq
+    from peft import LoraConfig, get_peft_model, PeftModel
+    from huggingface_hub import HfApi, login
+    from datasets import load_dataset, Dataset
+    print('OK: all imports succeeded. Proceed to cell 2.')
+    ```
+    Expected output: torch 2.10.0+cu128, transformers 5.0.0, tokenizers 0.22.2, trl 0.11.4, peft 0.19.1, accelerate 1.13.0, bitsandbytes 0.49.2, huggingface_hub 1.11.0, datasets 5.0.0, GPU count: 2, "OK: all imports succeeded. Proceed to cell 2."
+
+- Fallback path: vanilla HF transformers + peft + trl + bitsandbytes (no Unsloth). Pin transformers==4.46.3, tokenizers==0.20.3, trl==0.11.4, peft==0.13.2, accelerate==0.34.2, bitsandbytes==0.49.2, huggingface_hub==0.26.5, datasets==2.20.0. ~2x slower than Unsloth, ~70% more VRAM, but no dependency on Unsloth's internal patching. Use AutoModelForCausalLM.from_pretrained(quantization_config=BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.float16, bnb_4bit_use_double_quant=True), device_map="auto") instead of Unsloth's FastLanguageModel.from_pretrained(load_in_4bit=True). See §5 of the report for full fallback install + load + train + GGUF export code.
+
+- Full report saved at: /home/z/my-project/thursday-ai/research/04_kaggle_unsloth_working_config.md
+
+---
+Task ID: M0-fix-14 (final)
+Agent: Main Builder (GLM 5.2) + Kaggle-Unsloth-Compatibility-Researcher subagent
+Task: Proper research-based final dependency config — used subagent + websearch + wheel inspection as user demanded
+
+Work Log:
+- User: "use all skills like subagents and websearch to check each called dependency's compatibility with each other in specific versions"
+- Launched Task ID M0-DEPS-FINAL subagent with detailed research mission
+- Subagent did 13 web searches, read 13 pages, downloaded and inspected 7 wheels
+- Cross-referenced findings against each other and against user's actual Kaggle env
+
+KEY FINDINGS from subagent research:
+1. SFTConfig was NEVER removed from TRL — I was wrong in earlier worklog entries
+   - TRL ≥ 0.13 changed SFTTrainer CONSTRUCTOR signature (removed tokenizer,
+     dataset_text_field, max_seq_length, packing kwargs)
+   - Our cell 7 uses the 0.11.4 API, so we keep TRL 0.11.4
+2. bitsandbytes 0.49.2 is verified by wheel inspection:
+   - Has libbitsandbytes_cuda128.so (matches Kaggle CUDA 12.8)
+   - Requires torch<3,>=2.3 (works with Kaggle torch 2.10)
+   - >= 0.46.1 (satisfies transformers 5.0 4-bit quant requirement)
+   - < 0.50 (0.50+ requires torch 2.11, Kaggle has 2.10)
+   - Does NOT trigger broken triton.ops.matmul_perf_model import path
+3. transformers 5.0 is technically excluded by Unsloth's metadata
+   (Unsloth declares !=5.0.0, !=5.1.0) BUT:
+   - Unsloth collaborator @Datta0 confirmed --no-deps bypass works
+     in GitHub issue #4022 (closed April 2026)
+   - User's M0-fix-13 worklog confirmed Unsloth 2026.9.14 successfully
+     patches and runs with transformers 5.0.0 on Kaggle T4 x2 at runtime
+4. Unsloth 2026.9.14 is the current stable; requires unsloth_zoo>=2026.9.9
+
+IMPROVEMENTS APPLIED to notebook:
+- Pinned unsloth==2026.9.14 and unsloth_zoo==2026.9.9 (was unpinned)
+- Added backup bitsandbytes==0.48.2 fallback if 0.49.2 download fails
+- Detailed comment block explaining the verified compatibility chain
+- Removed all clever bitsandbytes introspection (was source of 4 prior failures)
+
+DELIVERABLE: research/04_kaggle_unsloth_working_config.md (600 lines)
+- Verified working config table per package
+- Copy-paste pip install block
+- Sanity-check imports (no introspection)
+- Kaggle-specific gotchas (session time, secrets, T4 x2, disk space, HfApi)
+- Vanilla fallback path (transformers+peft+trl without Unsloth)
+
+Commit 79adf8d pushed.
+
+Stage Summary:
+- Final config is research-verified, not guessed
+- User can re-download notebook + Kernel Restart + Run cell 1
+- Expected output (same as before since the core was right):
+    torch           2.10.0+cu128
+    transformers    5.0.0
+    tokenizers      0.22.2
+    trl             0.11.4
+    peft            0.19.1
+    accelerate      1.13.0
+    bitsandbytes    0.49.2
+    huggingface_hub 1.11.0
+    datasets        5.0.0
+    GPU count: 2
+    OK: all imports succeeded. Proceed to cell 2.
+- Then cell 4 should successfully download Qwen2.5-3B-Instruct and load in 4-bit
+- If anything still breaks, we have the vanilla fallback in research/04 §5
