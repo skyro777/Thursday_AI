@@ -528,3 +528,44 @@ Stage Summary:
     bnb.lib.compiled_with_cuda: True
     bitsandbytes 4-bit NF4 quantization test: OK (output shape (1, 128))
     OK: all imports succeeded.
+
+---
+Task ID: M0-fix-12
+Agent: Main Builder (GLM 5.2)
+Task: STRIP OUT all bitsandbytes introspection — just do imports and move on
+
+Work Log:
+- User (rightfully) frustrated at iteration 11+ for a single cell
+- Last failure: AttributeError: module 'bitsandbytes' has no attribute 'lib'
+- Even though I downloaded the wheel and grepped it, I missed that:
+  bitsandbytes/__init__.py only imports: research, utils, autograd._functions, nn, optim
+  It does NOT do `from .cextension import lib`
+  So bnb.lib doesn't exist at the top level (it's at bnb.cextension.lib, which is also fragile)
+- DECISION: stop trying to verify bitsandbytes internals. Every introspection
+  attempt broke because bitsandbytes internal API differs across versions.
+- The actual install IS fine — every import in the user's last run succeeded.
+- Stripped the deps cell to bare minimum:
+  1. Install Unsloth + unsloth_zoo with --no-deps
+  2. Override TRL to 0.11.4 with --no-deps
+  3. If `import bitsandbytes` fails, install 0.45.3 (NO introspection — just import)
+  4. Install gguf + git-lfs
+  5. Just imports + version prints (NO CUDA verification)
+  6. 'OK: all imports succeeded. Proceed to cell 2.'
+- Commit c86dab4 pushed
+
+Stage Summary:
+- Lesson: don't write clever sanity checks for libraries whose internal APIs
+  you don't fully know. Just import and move on. If something is actually
+  broken, the cell that USES it will tell you with a real error.
+- Expected cell 1 output (clean):
+  torch           2.10.0+cu128
+  transformers    5.0.0
+  tokenizers      0.22.2
+  trl             0.11.4
+  peft            0.19.1
+  accelerate      1.13.0
+  bitsandbytes    0.45.3
+  huggingface_hub 1.11.0
+  datasets        5.0.0
+  GPU count: 2
+  OK: all imports succeeded. Proceed to cell 2.
