@@ -197,12 +197,25 @@ def main():
     total_err = 0
     total_files = 0
 
+    # Expand any directory arguments into their *.jsonl files, recursively.
+    # This lets users pass either a file or a directory (or both) without
+    # hitting IsADirectoryError.
+    expanded_files: list[Path] = []
     for path_str in args.files:
-        path = Path(path_str)
-        if not path.exists():
-            print(f"❌ {path}: file not found", file=sys.stderr)
+        p = Path(path_str)
+        if not p.exists():
+            print(f"❌ {p}: file not found", file=sys.stderr)
             total_err += 1
             continue
+        if p.is_dir():
+            jsonl_files = sorted(p.rglob("*.jsonl"))
+            if not jsonl_files:
+                print(f"⚠️  {p}: no .jsonl files found in directory", file=sys.stderr)
+            expanded_files.extend(jsonl_files)
+        else:
+            expanded_files.append(p)
+
+    for path in expanded_files:
         total_files += 1
         file_ok = 0
         file_err = 0
