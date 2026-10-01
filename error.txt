@@ -1,0 +1,157 @@
+---------------------------------------------------------------------------
+ImportError                               Traceback (most recent call last)
+/tmp/ipykernel_58/3364136521.py in <cell line: 0>()
+      9 
+     10 # Sanity-check imports
+---> 11 import trl, transformers, peft
+     12 print(f'trl {trl.__version__} | transformers {transformers.__version__} | peft {peft.__version__}')
+     13 from trl import SFTTrainer, SFTConfig
+
+/usr/local/lib/python3.12/dist-packages/peft/__init__.py in <module>
+     15 __version__ = "0.21.2"
+     16 
+---> 17 from .auto import (
+     18     MODEL_TYPE_TO_PEFT_MODEL_MAPPING,
+     19     AutoPeftModel,
+
+/usr/local/lib/python3.12/dist-packages/peft/auto.py in <module>
+     19 from typing import Optional
+     20 
+---> 21 from transformers import (
+     22     AutoModel,
+     23     AutoModelForCausalLM,
+
+/usr/local/lib/python3.12/dist-packages/transformers/utils/import_utils.py in __getattr__(self, name)
+   2582         elif name in self._class_to_module:
+   2583             try:
+-> 2584                 module = self._get_module(self._class_to_module[name])
+   2585                 value = getattr(module, name)
+   2586             except (ModuleNotFoundError, RuntimeError, AttributeError) as e:
+
+/usr/local/lib/python3.12/dist-packages/transformers/utils/import_utils.py in _get_module(self, module_name)
+   2813             return importlib.import_module("." + module_name, self.__name__)
+   2814         except Exception as e:
+-> 2815             raise e
+   2816 
+   2817     def __reduce__(self):
+
+/usr/local/lib/python3.12/dist-packages/transformers/utils/import_utils.py in _get_module(self, module_name)
+   2811     def _get_module(self, module_name: str):
+   2812         try:
+-> 2813             return importlib.import_module("." + module_name, self.__name__)
+   2814         except Exception as e:
+   2815             raise e
+
+/usr/lib/python3.12/importlib/__init__.py in import_module(name, package)
+     88                 break
+     89             level += 1
+---> 90     return _bootstrap._gcd_import(name[level:], package, level)
+     91 
+     92 
+
+/usr/local/lib/python3.12/dist-packages/transformers/models/auto/modeling_auto.py in <module>
+     19 
+     20 from ...utils import logging
+---> 21 from .auto_factory import (
+     22     _BaseAutoBackboneClass,
+     23     _BaseAutoModelClass,
+
+/usr/local/lib/python3.12/dist-packages/transformers/models/auto/auto_factory.py in <module>
+     39 
+     40 if is_torch_available():
+---> 41     from ...generation import GenerationMixin
+     42 
+     43 
+
+/usr/local/lib/python3.12/dist-packages/transformers/utils/import_utils.py in __getattr__(self, name)
+   2582         elif name in self._class_to_module:
+   2583             try:
+-> 2584                 module = self._get_module(self._class_to_module[name])
+   2585                 value = getattr(module, name)
+   2586             except (ModuleNotFoundError, RuntimeError, AttributeError) as e:
+
+/usr/local/lib/python3.12/dist-packages/transformers/utils/import_utils.py in _get_module(self, module_name)
+   2813             return importlib.import_module("." + module_name, self.__name__)
+   2814         except Exception as e:
+-> 2815             raise e
+   2816 
+   2817     def __reduce__(self):
+
+/usr/local/lib/python3.12/dist-packages/transformers/utils/import_utils.py in _get_module(self, module_name)
+   2811     def _get_module(self, module_name: str):
+   2812         try:
+-> 2813             return importlib.import_module("." + module_name, self.__name__)
+   2814         except Exception as e:
+   2815             raise e
+
+/usr/lib/python3.12/importlib/__init__.py in import_module(name, package)
+     88                 break
+     89             level += 1
+---> 90     return _bootstrap._gcd_import(name[level:], package, level)
+     91 
+     92 
+
+/usr/local/lib/python3.12/dist-packages/transformers/generation/utils.py in <module>
+     37 )
+     38 from ..configuration_utils import get_head_shapes
+---> 39 from ..distributed.fsdp import is_fsdp_managed_module
+     40 from ..distributed.utils import _get_torch_distributed_world_size
+     41 from ..dynamic_module_utils import (
+
+/usr/local/lib/python3.12/dist-packages/transformers/distributed/fsdp.py in <module>
+     20 from ..utils import is_torch_available, is_torch_distributed_available, is_torch_greater_or_equal, logging, strtobool
+     21 from ..utils.quantization_config import QuantizationMethod
+---> 22 from .tensor_parallel import replace_layer_number_by_wildcard
+     23 from .utils import _is_torch_distributed_initialized
+     24 
+
+/usr/local/lib/python3.12/dist-packages/transformers/distributed/tensor_parallel.py in <module>
+     29 if is_torch_distributed_available():
+     30     import torch.distributed as dist
+---> 31     from torch.distributed.tensor import DTensor, Partial, Replicate, Shard, distribute_tensor
+     32     from torch.distributed.tensor.placement_types import _StridedShard
+     33 
+
+/usr/local/lib/python3.12/dist-packages/torch/distributed/tensor/__init__.py in <module>
+      2 
+      3 import torch
+----> 4 import torch.distributed.tensor._ops  # force import all built-in dtensor ops
+      5 from torch.distributed.device_mesh import DeviceMesh, init_device_mesh
+      6 from torch.distributed.tensor._api import (
+
+/usr/local/lib/python3.12/dist-packages/torch/distributed/tensor/_ops/__init__.py in <module>
+      1 # Copyright (c) Meta Platforms, Inc. and affiliates
+----> 2 from ._conv_ops import *  # noqa: F403
+      3 from ._embedding_ops import *  # noqa: F403
+      4 from ._math_ops import *  # noqa: F403
+      5 from ._matrix_ops import *  # noqa: F403
+
+/usr/local/lib/python3.12/dist-packages/torch/distributed/tensor/_ops/_conv_ops.py in <module>
+      6 import torch
+      7 from torch.distributed.device_mesh import DeviceMesh
+----> 8 from torch.distributed.tensor._dtensor_spec import DTensorSpec, TensorMeta
+      9 from torch.distributed.tensor._op_schema import (
+     10     OpSchema,
+
+/usr/local/lib/python3.12/dist-packages/torch/distributed/tensor/_dtensor_spec.py in <module>
+      8 import torch
+      9 from torch.distributed.device_mesh import DeviceMesh
+---> 10 from torch.distributed.tensor.placement_types import (
+     11     _is_shard_like,
+     12     _MaskPartial,
+
+/usr/local/lib/python3.12/dist-packages/torch/distributed/tensor/placement_types.py in <module>
+     10 import torch
+     11 import torch._C
+---> 12 import torch.distributed._functional_collectives as funcol
+     13 from torch._C._distributed import Placement
+     14 from torch.distributed import RankType
+
+/usr/local/lib/python3.12/dist-packages/torch/distributed/_functional_collectives.py in <module>
+     11 import torch.distributed as dist
+     12 import torch.distributed.distributed_c10d as c10d
+---> 13 from torch._utils import _maybe_view_chunk_cat
+     14 from torch.distributed.device_mesh import DeviceMesh
+     15 from torch.fx.experimental.proxy_tensor import get_proxy_mode
+
+ImportError: cannot import name '_maybe_view_chunk_cat' from 'torch._utils' (/usr/local/lib/python3.12/dist-packages/torch/_utils.py)
