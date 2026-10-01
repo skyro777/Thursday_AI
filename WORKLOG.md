@@ -433,3 +433,48 @@ Stage Summary:
   datasets        whatever Kaggle preinstalled
   bitsandbytes lib: <path to .so>
   OK: all imports succeeded.
+
+---
+Task ID: M0-fix-10
+Agent: Main Builder (GLM 5.2)
+Task: Fix AttributeError: module 'bitsandbytes' has no attribute 'lib' — proper CUDA verification per HF docs
+
+Work Log:
+- User reported: AttributeError on `print(f'bitsandbytes lib: {bnb.lib}')`
+- ALL other imports succeeded (torch 2.10, transformers 5.0, trl 0.11.4, peft 0.19, bitsandbytes 0.45.3, huggingface_hub 1.11, datasets 5.0)
+- Web-searched proper bitsandbytes CUDA verification API
+- Found HuggingFace docs say bnb.lib is NOT a valid attribute. Proper checks are:
+    1. torch.cuda.is_available() must return True
+    2. bnb.cextension.BNB_BACKEND must equal 'cuda' (the loaded backend name)
+    3. Functional test: bnb.nn.Linear8bitLt should run on GPU without error
+- Replaced the broken `print(f'bitsandbytes lib: {bnb.lib}')` line with proper 3-step verification:
+    * Print torch.cuda.is_available() and GPU count + names
+    * Print bnb.cextension.BNB_BACKEND and assert it == 'cuda'
+    * Create a Linear8bitLt layer, send to GPU, run forward pass on random input
+- Commit 956fb1d pushed
+
+Stage Summary:
+- The install path is finally correct — all imports succeeded in user's last run
+- Only the verification check was broken (my mistake guessing bnb.lib)
+- User should re-download notebook, restart kernel, run cell 1
+- Expected final output:
+    bitsandbytes CUDA binary missing or broken (...). Installing 0.45.3 ...
+    bitsandbytes 0.45.3 — re-installed
+    git-lfs is already the newest version ...
+    torch           2.10.0+cu128
+    transformers    5.0.0
+    tokenizers      0.22.2
+    trl             0.11.4
+    peft            0.19.1
+    accelerate      1.13.0
+    bitsandbytes    0.45.3
+    huggingface_hub 1.11.0
+    datasets        5.0.0
+    torch.cuda.is_available(): True
+    GPU count: 2
+      GPU 0: Tesla T4
+      GPU 1: Tesla T4
+    bnb backend: cuda
+    bitsandbytes 8-bit quantization test: OK (output shape (1, 128))
+    OK: all imports succeeded.
+- After this, cell 4 (model load via Unsloth FastLanguageModel) should work
