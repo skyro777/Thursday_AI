@@ -217,3 +217,38 @@ Stage Summary:
   huggingface_hub 0.25.x
   datasets        2.20.x
   OK: all imports succeeded.
+
+---
+Task ID: M0-fix-5
+Agent: Main Builder (GLM 5.2)
+Task: Drop Unsloth, use vanilla transformers+peft+trl (final dependency fix)
+
+Work Log:
+- After 4 attempts to make Unsloth work with Kaggle's drift (hub 0.x→1.x, tokenizers 0.20→0.22, torch 2.5 lacking 2.6 APIs), decided to abandon Unsloth for v0.1 smoke train
+- Root cause: Unsloth's setup.py pins specific transformers/peft/tokenizers/hub versions. Each fix exposed the next conflict because Unsloth's install always re-upgraded something we had just pinned down
+- Decision: vanilla stack (transformers + peft + trl + bitsandbytes) — ~2x slower but no version conflicts
+- Rewrote 4 cells:
+  * Cell 1 (deps): removed Unsloth install entirely. Single pip command with all pinned deps so resolver finds consistent set in one shot. Removed %%capture so pip output is visible.
+  * Cell 4 (model load): AutoModelForCausalLM + BitsAndBytesConfig(load_in_4bit=True, nf4, fp16 compute) — replaces FastLanguageModel.from_pretrained
+  * Cell 5 (LoRA attach): peft.LoraConfig + get_peft_model + prepare_model_for_kbit_training — replaces FastLanguageModel.get_peft_model
+  * Cell 7 (trainer): SFTTrainer with NO train_on_responses_only — train on all tokens. Slightly less optimal but works. Added gradient_checkpointing=True for VRAM savings.
+
+Trade-off accepted:
+- Vanilla is ~2x slower than Unsloth (no fused LoRA kernels)
+- No loss masking — model trains on system/user/tool tokens too (wastes some capacity but works)
+- For 5k-example × 3-epoch smoke (~1000 steps), extra time is ~15-20 min — acceptable
+
+Stage Summary:
+- Commit 26b03ff pushed
+- Expected output of cell 1:
+  torch           2.5.x
+  transformers    4.46.x
+  tokenizers      0.20.x
+  trl             0.8.6
+  peft            0.13.x
+  accelerate      0.34.x
+  bitsandbytes    0.43.x
+  huggingface_hub 0.25.x
+  datasets        2.20.x
+  OK: all imports succeeded.
+- This should be the FINAL dependency fix. If it still breaks, the issue is somewhere else (e.g. model download, dataset formatting).
