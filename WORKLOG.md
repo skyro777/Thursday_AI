@@ -119,3 +119,20 @@ Stage Summary:
   2. Upload training/thursday_ai_finetune.ipynb to Kaggle
   3. Set accelerator = GPU T4 x2
   4. Run all cells → first smoke-trained Thursday AI v0.1 will be on HF Hub
+
+---
+Task ID: M0-fix-1
+Agent: Main Builder (GLM 5.2)
+Task: Fix HuggingFace login warning on Kaggle ("Token has not been saved to git credential helper")
+
+Work Log:
+- User reported: at Kaggle, after setting HF_TOKEN secret, notebook printed "Token has not been saved to git credential helper. Cannot authenticate through git-credential as no helper is defined..."
+- Diagnosed: this is a WARNING, not an error. login() succeeded; the token is loaded in-memory. The warning is huggingface_hub trying to set up git credential helper (used for `git push` to HF) which Kaggle doesn't have.
+- We don't actually use git for HF uploads in this notebook — every upload uses HfApi(token=HF_TOKEN) which passes the token explicitly in each API call.
+- Fix: changed `login(token=HF_TOKEN, add_to_git_credential=True)` → `add_to_git_credential=False` in cell 2 of training/thursday_ai_finetune.ipynb
+- Verified notebook is still valid JSON (30 cells, nbformat 4.5)
+- Committed (65da7c3) + pushed to main
+
+Stage Summary:
+- Warning is silenced for future runs
+- User can either: (a) pull the updated notebook from GitHub and re-upload to Kaggle, OR (b) just continue with the current run since the warning was harmless — login actually succeeded and all subsequent HfApi calls will use the token explicitly
