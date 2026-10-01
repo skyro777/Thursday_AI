@@ -84,3 +84,38 @@ Stage Summary:
 - Synthetic data generation plan: 3 methods, all used in mix. (A) Template-based Jinja2 skeletons, 25k deterministic format-correct examples. (B) LLM-assisted via teacher model (Qwen2.5-72B / GLM-4.5 via z-ai SDK, Apache-2.0 licensed only) with Evol-Instruct mutation + schema validation, ~47k examples. (C) Recorded Playwright + pyautogui sessions across Win/macOS/Linux, 5k real traces amplified via Method B distillation to 12k. Final mixture: 90k total (28% templates / 52% teacher-distilled / 6% real / 14% HF-converted).
 - Recommended target dataset size: 90,000 examples x 3 epochs on T4x2 Unsloth QLoRA = ~10k optimizer steps, fits single 9-hr Kaggle session. Phase 0 smoke test (1k) -> Phase 1 format acquisition (15k x 2 ep) -> Phase 2 generalisation (90k x 3 ep) -> Phase 3 RL via CUA-Gym (out of scope, future).
 - Full report saved at: /home/z/my-project/thursday-ai/research/02_training_data_approach.md
+
+---
+Task ID: 3-9 (Main Builder work, post-research)
+Agent: Main Builder (GLM 5.2)
+Task: Write the living plan, architecture, dataset schema, generators, validator, Kaggle notebook, README; push to GitHub
+
+Work Log:
+- Read all 3 research reports (01 base model, 02 training data, 03 Kaggle recipe) — all selected Qwen2.5-3B-Instruct @ Q4_K_M via Unsloth QLoRA on T4x2
+- Wrote LIVING_PLAN.md (21KB, v0.1) — 12 sections: pitch, north-star goals, scope, system map, model decision, action vocabulary, dataset spec, build roadmap M0-M7, risks, naming, repo layout, decision history
+- Wrote ARCHITECTURE.md (15KB) — 10 sections: training vs inference diagrams, think-act-observe loop pseudocode, tool-call lifecycle, web-AI delegation pattern, safety architecture, memory (M6), inference engines, training pipeline, performance budget, failure modes
+- Wrote data/schema/tools.json — the 26 tools as JSON-schema (open_app, close_window, switch_app, minimize_window, click, drag, type_text, key_press, scroll, screenshot, list_dir, read_file, write_file, run_shell, browser_open, browser_search, browser_navigate, browser_close_tab, paste_to_webai, read_webai_response, set_alarm, set_volume, toggle_mute, open_url, notify_user, ask_user, finish)
+- Wrote data/system_prompts/thursday_default.md — system prompt with variables {os}, {now}, {user_name}
+- Wrote 6 hand-written golden JSONL examples: alarm_7am, find_youtube_video, summarize_screen, world_news, explain_script, volume_and_open — all validate
+- Wrote scripts/generate_template_data.py — Method A generator with 10 templates (set_alarm, open_app, set_volume, browser_search_simple, open_url, delegate_to_webai, world_news, explain_file, ask_user_clarify, list_dir), cross-products OS×time×user_name×slot_values to scale. Tested: 50/50 examples valid.
+- Wrote scripts/generate_llm_distilled.py — Method B generator using teacher LLM (Ollama/ZAI SDK/OpenAI-compatible) with Evol-Instruct mutation prompts, validates each output and retries on failure
+- Wrote scripts/validate_dataset.py — checks JSON validity, schema correctness, tool-call id consistency, single-call-per-turn rule, JSON-string arguments convention. Tested: 100/100 generated + 6/6 hand-written all pass.
+- Wrote scripts/merge_and_quantize.py — post-train: PEFT merge → save → llama.cpp convert_hf_to_gguf.py → llama-quantize Q4_K_M → optional HF Hub push
+- Wrote training/thursday_ai_finetune.ipynb — 30-cell Kaggle notebook (validated JSON nbformat 4.5): config → install deps → HF login → clone repo → generate dataset if missing → load Qwen2.5-3B-Instruct in 4-bit via Unsloth → attach LoRA r=32 alpha=64 all-linear → format with Qwen2 chat template → train_on_responses_only → SFTTrainer 3 epochs effective batch 16 → save LoRA → merge → GGUF Q4_K_M → push to HF Hub → smoke test
+- Wrote training/requirements.txt + training/README.md
+- Wrote eval/thursday_eval_v1.json — 8-task seed benchmark across 7 categories
+- Wrote eval/README.md + runtime/README.md (placeholders for M3/M4)
+- Wrote README.md (10KB) — quick links, model decision summary, dataset spec, repo layout, roadmap
+- Wrote .gitignore (excludes *.gguf, *.bin, data/processed/*.jsonl, etc.)
+- Mirrored worklog into repo as WORKLOG.md
+- Committed (M0: Foundation) + pushed to https://github.com/skyro777/Thursday_AI.git main (commit c481a9b)
+
+Stage Summary:
+- M0 (Foundation) is COMPLETE and pushed
+- All artifacts saved to GitHub repo
+- Ready for M1 (smoke-train): user can now upload training/thursday_ai_finetune.ipynb to Kaggle with T4x2 + HF_TOKEN secret and run it
+- Next steps for user:
+  1. Get HuggingFace token (write permission) → add as Kaggle Secret `HF_TOKEN`
+  2. Upload training/thursday_ai_finetune.ipynb to Kaggle
+  3. Set accelerator = GPU T4 x2
+  4. Run all cells → first smoke-trained Thursday AI v0.1 will be on HF Hub
