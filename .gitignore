@@ -36,3 +36,7 @@ adapter_config.json
 
 # Logs
 *.log
+
+# Don't commit error logs / debug dumps
+error.txt
+*.error
