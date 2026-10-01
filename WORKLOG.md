@@ -478,3 +478,53 @@ Stage Summary:
     bitsandbytes 8-bit quantization test: OK (output shape (1, 128))
     OK: all imports succeeded.
 - After this, cell 4 (model load via Unsloth FastLanguageModel) should work
+
+---
+Task ID: M0-fix-11
+Agent: Main Builder (GLM 5.2)
+Task: Fix AttributeError on bnb.cextension.BNB_BACKEND — use REAL API verified by inspecting wheel
+
+Work Log:
+- User reported: AttributeError: module 'bitsandbytes.cextension' has no attribute 'BNB_BACKEND'
+- I had trusted a web search snippet from pydevtools.com that described an older bitsandbytes API
+- Decided to ACTUALLY VERIFY by downloading the bitsandbytes==0.45.3 wheel from PyPI and grepping its source:
+    pip download --no-deps --dest /tmp/bnb_check "bitsandbytes==0.45.3"
+    unzip bitsandbytes-0.45.3-*.whl -d extracted
+    grep -rn "BNB_BACKEND" extracted/bitsandbytes/   →   NOTHING (doesn't exist)
+    grep "compiled_with_cuda" extracted/bitsandbytes/cextension.py
+      line 40: compiled_with_cuda = False  (BNBNativeLibrary base class)
+      line 53: compiled_with_cuda = True   (CudaBNBNativeLibrary subclass)
+    grep "^lib" extracted/bitsandbytes/cextension.py
+      line 85: lib = get_native_library()
+    grep "^from .cextension" extracted/bitsandbytes/functional.py
+      line 9: from .cextension import lib
+
+- The REAL API in bitsandbytes 0.45.3 is:
+    bnb.lib                    # the native lib instance (None if load failed)
+    bnb.lib.compiled_with_cuda # True if CUDA build, False if CPU-only build
+
+- Replaced broken verification:
+    OLD: print(f'bnb backend: {bnb.cextension.BNB_BACKEND}')
+         assert bnb.cextension.BNB_BACKEND == 'cuda'
+    NEW: print(f'bnb.lib loaded: {bnb.lib is not None}')
+         print(f'bnb.lib.compiled_with_cuda: {bnb.lib.compiled_with_cuda}')
+         assert bnb.lib is not None and bnb.lib.compiled_with_cuda
+
+- Also upgraded the functional test from Linear8bitLt to Linear4bit — the
+  4-bit path is what QLoRA actually uses, so testing it directly is more
+  representative than the 8-bit path
+
+- Commit 1b4280d pushed
+
+Stage Summary:
+- Lesson learned: web search snippets can be outdated. When version-specific
+  API calls fail, download the actual wheel and grep its source.
+- Expected final sanity-check output:
+    torch.cuda.is_available(): True
+    GPU count: 2
+      GPU 0: Tesla T4
+      GPU 1: Tesla T4
+    bnb.lib loaded: True
+    bnb.lib.compiled_with_cuda: True
+    bitsandbytes 4-bit NF4 quantization test: OK (output shape (1, 128))
+    OK: all imports succeeded.
