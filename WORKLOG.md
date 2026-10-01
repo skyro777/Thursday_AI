@@ -286,3 +286,23 @@ Stage Summary:
   huggingface_hub 0.25.x
   datasets        2.20.x
   OK: all imports succeeded.
+
+---
+Task ID: M0-fix-7
+Agent: Main Builder (GLM 5.2)
+Task: Persistent SFTConfig ImportError even after force-pin trl==0.8.6
+
+Work Log:
+- User reported: even after my fix-6 (Unsloth first, force-pin on top), sanity check STILL fails:
+  "ImportError: cannot import name 'SFTConfig' from 'trl'"
+- Diagnosis: pip install --force-reinstall --no-deps trl==0.8.6 is NOT reliably overwriting the newer TRL that Unsloth pulled in (>=0.12 where SFTConfig was removed). Likely cause: pip --force-reinstall skips files that match the requested version, OR Unsloth shadows TRL from a different location.
+- New approach: explicit 2-step pattern
+  1. pip uninstall -y trl transformers tokenizers huggingface_hub peft (WIPE them completely)
+  2. pip install --no-deps the pinned versions we want
+  3. pip install accelerate bitsandbytes datasets gguf (no conflicts)
+- Added diagnostics that print the actual trl.__file__ path being loaded so we can see if Unsloth shadows it from elsewhere
+- Added explicit Unsloth imports (FastLanguageModel, is_bfloat16_supported) to sanity check so we catch any Unsloth-side breakage early too
+- Commit c291dec pushed
+
+Stage Summary:
+- If this STILL fails, the diagnostic output will tell us exactly where TRL is being loaded from, and we can either: (a) add a sys.path manipulation, or (b) revert to vanilla stack with a clean uninstall pattern.
