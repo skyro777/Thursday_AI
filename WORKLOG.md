@@ -380,3 +380,56 @@ Stage Summary:
   datasets        4.3.0
   bitsandbytes cpp extension: OK    ← new check
   OK: all imports succeeded.
+
+---
+Task ID: M0-fix-9
+Agent: Main Builder (GLM 5.2)
+Task: Use December 2025 official Unsloth install path with --no-deps (proper research-based fix)
+
+Work Log:
+- User feedback: "you don't have actually much knowledge of dependencies, so you need to study it once properly in web"
+- Used web-search skill to actually research the issue
+- Found December 2025 Unsloth install guide (qwe.edu.pl/ai-tools/qlora-fine-tuning-unsloth-install) which explicitly says:
+    "The #1 mistake people make with Unsloth in 2026? Copying the install
+    snippet from a 2024 Colab tutorial. That command — pip install
+    'unsloth[colab-new] @ git+...' — fights the modern unsloth_zoo resolver
+    and throws a wall of dependency errors."
+    "What actually works in the December 2025 release cycle: fewer flags,
+    no extras, let Unsloth resolve its own stack."
+- The official command is:
+    pip install --upgrade --force-reinstall --no-cache-dir --no-deps unsloth unsloth_zoo
+- The --no-deps flag is THE KEY. Without it, pip re-resolves torch,
+  bitsandbytes, transformers, trl against each other — which is EXACTLY what
+  broke us for 8 iterations.
+- Also found bitsandbytes issue #1492 confirming the triton.ops ModuleNotFoundError
+  was fixed in bitsandbytes 0.45+ (not 0.43.x as I had pinned).
+
+NEW APPROACH (research-based):
+1. Install Unsloth + unsloth_zoo with --no-deps (don't touch Kaggle's stack)
+2. Override only TRL to 0.11.4 (for SFTConfig) with --no-deps
+3. Use whatever bitsandbytes Kaggle preinstalled (don't pin)
+4. If bitsandbytes CUDA binary is missing, install 0.45.3 as fallback
+5. Removed ALL pins for transformers/tokenizers/hub/accelerate/peft — let Kaggle's preinstalled stack stay as-is
+
+Why this should be the FINAL fix:
+- We're no longer fighting Kaggle's environment
+- We're letting Kaggle's preinstalled stack stand (it's tested to work together)
+- Only patching the one thing we need: TRL 0.11.4 for SFTConfig
+- Commit 1488ff7 pushed
+
+Stage Summary:
+- The root cause of all 8 prior failures was the old `unsloth[colab-new] @ git+...` install
+  triggering pip's dependency resolver to cascade upgrades across the whole stack
+- Switching to `pip install --no-deps unsloth unsloth_zoo` eliminates the cascade
+- Expected output of cell 1:
+  torch           2.10.0+cu128 (Kaggle's preinstalled, untouched)
+  transformers    whatever Kaggle preinstalled
+  tokenizers      whatever Kaggle preinstalled
+  trl             0.11.4 (we override this)
+  peft            whatever Kaggle preinstalled
+  accelerate      whatever Kaggle preinstalled
+  bitsandbytes    whatever Kaggle preinstalled (or 0.45.3 fallback)
+  huggingface_hub whatever Kaggle preinstalled
+  datasets        whatever Kaggle preinstalled
+  bitsandbytes lib: <path to .so>
+  OK: all imports succeeded.
