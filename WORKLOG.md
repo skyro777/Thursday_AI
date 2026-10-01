@@ -252,3 +252,37 @@ Stage Summary:
   datasets        2.20.x
   OK: all imports succeeded.
 - This should be the FINAL dependency fix. If it still breaks, the issue is somewhere else (e.g. model download, dataset formatting).
+
+---
+Task ID: M0-fix-6
+Agent: Main Builder (GLM 5.2)
+Task: Properly fix Unsloth dependency cascade (user said don't switch to vanilla)
+
+Work Log:
+- User feedback: keep Unsloth, solve the issue properly (vanilla has its own comprehension issues)
+- Re-analyzed why my fix-5 (pin tokenizers FIRST, then install Unsloth) still failed:
+  * The order was WRONG. Unsloth's setup.py declares its own pinned versions of transformers/peft/tokenizers/hub.
+  * When pip installed Unsloth AFTER my pins, it re-pulled tokenizers 0.22 (Unsloth wants latest), overwriting my 0.20 pin.
+  * By the time the sanity-check ran, tokenizers was back at 0.22.
+- Proper fix: REVERSE the order.
+  * STEP 1: Install Unsloth FIRST (let it pull whatever it wants)
+  * STEP 2: Then force-pin transformers/trl/peft/tokenizers/hub with --no-deps AND --force-reinstall on top of Unsloth's choices
+  * This way the FINAL state has OUR pins, not Unsloth's
+- Restored all Unsloth cells (model load, LoRA attach, trainer with train_on_responses_only)
+- Verified notebook structure: 30 cells, valid JSON, cell 4=deps, cell 16=trainer
+- Commit 55eaa9d pushed
+
+Stage Summary:
+- Unsloth is back, with the dependency pin order reversed properly
+- This is the proper fix (not the vanilla fallback)
+- Expected sanity-check output:
+  torch           2.5.x
+  transformers    4.46.x
+  tokenizers      0.20.x
+  trl             0.8.6
+  peft            0.13.x
+  accelerate      0.34.x
+  bitsandbytes    0.43.x
+  huggingface_hub 0.25.x
+  datasets        2.20.x
+  OK: all imports succeeded.
