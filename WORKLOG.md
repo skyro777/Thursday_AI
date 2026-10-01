@@ -306,3 +306,37 @@ Work Log:
 
 Stage Summary:
 - If this STILL fails, the diagnostic output will tell us exactly where TRL is being loaded from, and we can either: (a) add a sys.path manipulation, or (b) revert to vanilla stack with a clean uninstall pattern.
+
+---
+Task ID: M0-fix-7
+Agent: Main Builder (GLM 5.2)
+Task: Fix 'cannot import name SFTConfig from trl' — TRL 0.8.6 has no SFTConfig
+
+Work Log:
+- User reported: 'ImportError: cannot import name SFTConfig from trl' even after the install succeeded
+- Diagnosed: pip-installed TRL 0.8.6 successfully (transformers/peft/tokenizers/hub all printed versions fine), but the trl import failed
+- Downloaded TRL 0.8.6 wheel and grepped its __init__.py:
+    grep 'SFTConfig' trl/__init__.py   →   NOTHING
+- SFTConfig was added in TRL 0.9.x and removed in 0.12
+- My pin to 0.8.6 was based on stale memory — it never had SFTConfig
+- Verified by downloading and grepping multiple TRL wheels:
+    trl 0.8.6  → no SFTConfig
+    trl 0.9.6  → has SFTConfig ✓
+    trl 0.11.4 → has SFTConfig ✓ (latest before removal)
+- Bumped pin from 'trl==0.8.6' to 'trl==0.11.4'
+- Commit 4440a71 pushed
+
+Stage Summary:
+- This was the real cause of the SFTConfig ImportError
+- All other versions are correct: transformers 4.46.x, tokenizers 0.20.x, hub 0.25.x
+- Expected sanity-check output after fix:
+  torch           2.5.x
+  transformers    4.46.x
+  tokenizers      0.20.x
+  trl             0.11.4
+  peft            0.13.x
+  accelerate      0.34.x
+  bitsandbytes    0.43.x
+  huggingface_hub 0.25.x
+  datasets        2.20.x
+  OK: all imports succeeded.
