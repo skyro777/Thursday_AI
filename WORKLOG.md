@@ -569,3 +569,42 @@ Stage Summary:
   datasets        5.0.0
   GPU count: 2
   OK: all imports succeeded. Proceed to cell 2.
+
+---
+Task ID: M0-fix-13
+Agent: Main Builder (GLM 5.2)
+Task: Install bitsandbytes 0.49.2 + import unsloth first (REAL fix based on actual error)
+
+Work Log:
+- User pasted cell 4 (model load) error: ImportError: Using bitsandbytes 4-bit quantization requires bitsandbytes: pip install -U bitsandbytes>=0.46.1
+- Root cause: Kaggle preinstalls transformers 5.0.0 which requires bitsandbytes >= 0.46.1 for 4-bit quantization. We had bitsandbytes 0.45.3 (my fallback install). 0.45.3 < 0.46.1 = ImportError.
+- Listed available bitsandbytes versions: 0.46.0, 0.46.1, 0.47.0, 0.48.x, 0.49.x, 0.50.x
+- Constraint: 0.50+ requires torch 2.11 (Kaggle has 2.10). So range is 0.46.1 to 0.49.2.
+- Downloaded bitsandbytes==0.49.2 wheel and verified:
+    * Has libbitsandbytes_cuda128.so (matches Kaggle's CUDA 12.8)
+    * Has bitsandbytes/triton/ subpackage (no broken triton.ops.matmul_perf_model import)
+    * >= 0.46.1 (satisfies transformers 5.0 requirement)
+    * < 0.50 (doesn't require torch 2.11)
+- Installed bitsandbytes==0.49.2 with --no-deps explicitly (no fallback install)
+- Also fixed Unsloth import order warning:
+    UserWarning: Unsloth should be imported before [trl, transformers, peft]
+  Added 'import unsloth' as the FIRST sanity-check import line.
+- Commit ec6c7e3 pushed
+
+Stage Summary:
+- This time the fix is based on the ACTUAL error message, not a guess.
+- bitsandbytes version is verified by downloading the wheel and inspecting its contents.
+- Expected cell 1 output (same as before, but bitsandbytes 0.49.2 instead of 0.45.3):
+    torch           2.10.0+cu128
+    transformers    5.0.0
+    tokenizers      0.22.2
+    trl             0.11.4
+    peft            0.19.1
+    accelerate      1.13.0
+    bitsandbytes    0.49.2
+    huggingface_hub 1.11.0
+    datasets        5.0.0
+    GPU count: 2
+    OK: all imports succeeded. Proceed to cell 2.
+- Then cell 4 (model load) should download Qwen2.5-3B-Instruct (~2GB, 2-3 min) and load it in 4-bit NF4.
+- Watch for: 'Unsloth 2026.9.14: Fast Qwen2 patching. Transformers: 5.0.0. Tesla T4. Num GPUs = 2.' (we already saw this — it means Unsloth loaded)
