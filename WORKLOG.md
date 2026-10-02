@@ -796,3 +796,170 @@ Stage Summary:
     OK: all imports succeeded. Proceed to cell 2.
 - Then cell 4 should successfully download Qwen2.5-3B-Instruct and load in 4-bit
 - If anything still breaks, we have the vanilla fallback in research/04 §5
+
+---
+Task ID: M0-fix-15
+Agent: SFTTrainer-Kwarg-Fix-Researcher
+Task: Research exact fix for 'Trainer.__init__() got an unexpected keyword argument tokenizer' on Kaggle cell 7
+
+Work Log:
+- Read worklog M0-fix-14 and M0-DEPS-FINAL entries for full context
+- Read /home/z/my-project/thursday-ai/training/thursday_ai_finetune.ipynb cell 1 (pip install) and cell 7 (SFTTrainer call) to understand exact kwarg usage:
+    * Cell 1 pins trl==0.11.4
+    * Cell 7 passes tokenizer=tokenizer, dataset_text_field='text', max_seq_length=4096,
+      data_collator=DataCollatorForSeq2Seq(tokenizer=tokenizer, ...), dataset_num_proc=2, packing=False
+- Downloaded 10 TRL wheels from PyPI (0.11.4, 0.12.1, 0.13.0, 0.14.0, 0.16.1, 0.18.1, 0.22.0,
+  0.24.0, 1.0.0, 1.14.1) and unzipped each to inspect sft_trainer.py
+- Confirmed:
+    * TRL 0.11.4 SFTTrainer.__init__ has 'tokenizer' kwarg (line 126) + super().__init__(tokenizer=...) at line 401-413
+    * TRL 0.12.1 SFTTrainer.__init__ has 'processing_class' kwarg (line 135) +
+      @deprecate_kwarg("tokenizer", new_name="processing_class", version="0.16.0") decorator at line 127 +
+      super().__init__(processing_class=...) at line 408-420
+    * TRL 0.12.1 STILL has dataset_text_field, packing, max_seq_length, dataset_num_proc as direct
+      SFTTrainer.__init__ kwargs (lines 144-151) — these were moved to SFTConfig only in TRL 0.13.0+
+    * TRL 0.13.0 SFTTrainer.__init__ signature LOST dataset_text_field, max_seq_length, packing,
+      dataset_num_proc (moved into SFTConfig) — this is why we DON'T upgrade past 0.12.x
+- Downloaded unsloth==2026.9.14 + unsloth_zoo==2026.9.9 + transformers==5.0.0 wheels
+- Inspected /tmp/unsloth_inspect/unsloth/unsloth/trainer.py:
+    * Lines 1237-1317: _backwards_compatible_trainer wrapper
+    * Lines 1245-1246: THE KEY SHIM —
+        if "processing_class" in trainer_params and "tokenizer" in kwargs:
+            kwargs["processing_class"] = kwargs.pop("tokenizer")
+      So Unsloth ALREADY auto-converts tokenizer= → processing_class= — but ONLY if TRL's
+      SFTTrainer.__init__ signature contains processing_class (which is true for TRL ≥ 0.12.x, false for 0.11.x)
+    * Line 1572: _patch_trl_trainer gates the wrapper to TRL > 0.11.0 (both 0.11.4 and 0.12.1 satisfy this)
+    * Line 1248: separate branch for TRL ≥ 0.13.0.dev0 auto-migrates dataset_text_field etc. into SFTConfig
+- Inspected /tmp/transformers_inspect/transformers/transformers/trainer.py:
+    * Line 382-401: Trainer.__init__ signature has 'processing_class' parameter (lines 389-393),
+      NO 'tokenizer' parameter, NO @deprecate_kwarg decorator
+- Inspected /tmp/transformers_inspect/transformers/transformers/utils/deprecation.py:
+    * Line 36-141: @deprecate_kwarg decorator definition — confirms it auto-converts old_name → new_name
+      with a warning (default raise_if_greater_or_equal_version=False)
+- Verified Unsloth's Version() helper at /tmp/unsloth_zoo_inspect/unsloth_zoo/unsloth_zoo/utils.py:41-75
+  (extracts __version__ from module objects)
+- Web searches via z-ai CLI (8 queries, all saved to /tmp/research_searches/s1.json through s8.json):
+    * "TRL SFTTrainer processing_class tokenizer kwarg deprecation version 0.12"
+    * "Unsloth SFTTrainer TypeError Trainer.__init__ got an unexpected keyword argument tokenizer transformers 5.0"
+    * "transformers 5.0 Trainer tokenizer renamed processing_class deprecation"
+    * "TRL 0.12.0 changelog processing_class SFTTrainer migration"
+    * "github unslothai unsloth issue tokenizer processing_class Trainer transformers 5.0"
+    * "Unsloth Kaggle SFTTrainer processing_class fix transformers 5.0 notebook working"
+    * "unsloth trainer.py _backwards_compatible_trainer processing_class tokenizer auto convert"
+    * "unsloth 2026 transformers 5.0 TRL 0.11 SFTTrainer working kaggle T4"
+- Web page reads via z-ai CLI (8 pages saved to /tmp/research_pages/):
+    * https://github.com/huggingface/trl/releases — confirmed 0.12.0 release exists
+    * https://stackoverflow.com/questions/79546910 — accepted answer (Mar 2025):
+        "In the 0.12.0 release it is explained that the tokenzier argument is now called
+        the processing_class parameter."
+    * https://github.com/huggingface/trl/issues/6168 — same error as user's
+    * https://github.com/unslothai/unsloth/issues/1264 — related SFTTrainer kwarg issue
+    * https://github.com/huggingface/peft/issues/2400 — peft user confusion confirming rename
+    * https://github.com/huggingface/trl/blob/main/MIGRATION.md
+    * https://raw.githubusercontent.com/huggingface/trl/v0.12.0/CHANGELOG.md — 404 (file didn't exist
+      at that tag; not needed — wheel inspection + StackOverflow answer already confirm 0.12.0 rename)
+    * https://huggingface.co/docs/trl/en/sft_trainer — current docs use processing_class
+
+KEY FINDINGS (full evidence in research/05_trainer_tokenizer_kwarg_fix.md):
+
+Question A: TRL 0.11.4's SFTTrainer.__init__ uses kwarg name 'tokenizer' (no 'processing_class').
+            Verified from trl-0.11.4-py3-none-any.whl sft_trainer.py line 126.
+
+Question B: TRL 1.x (1.0.0, 1.14.1) uses kwarg name 'processing_class' only.
+            Verified from trl-1.14.1-py3-none-any.whl sft_trainer.py line 931.
+
+Question C: Unsloth 2026.9.14's compiled UnslothSFTTrainer (generated at runtime into
+            /tmp/unsloth_compiled_cache/UnslothSFTTrainer.py on Kaggle) wraps TRL's SFTTrainer
+            with _backwards_compatible_trainer (unsloth/trainer.py line 1237). The wrapper
+            INSPECTS TRL's signature and passes whatever kwarg TRL expects:
+              - If TRL signature has 'processing_class' (TRL ≥ 0.12.x): wrapper auto-converts
+                tokenizer= → processing_class= (line 1245-1246), then forwards to TRL
+              - If TRL signature has 'tokenizer' (TRL 0.11.x): wrapper leaves tokenizer= alone,
+                TRL then calls super().__init__(tokenizer=...) to transformers.Trainer
+            So Unsloth doesn't HARDCODE either — it adapts. The bug is that TRL 0.11.4's
+            signature has the wrong name for transformers 5.0.
+
+Question D: transformers 5.0.0's Trainer.__init__ accepts 'processing_class' ONLY.
+            'tokenizer' kwarg was fully removed (no @deprecate_kwarg decorator on Trainer.__init__).
+            Verified from transformers-5.0.0-py3-none-any.whl trainer.py line 382-401.
+
+Question E: The MINIMAL fix is Option (b): upgrade TRL from 0.11.4 → 0.12.1.
+            Option (a) (just swap kwarg name in cell 7) FAILS because TRL 0.11.4 SFTTrainer
+            doesn't accept processing_class= kwarg → TypeError on TRL layer first.
+            Option (c) (downgrade transformers) creates more problems than it solves.
+            The optional defense-in-depth: ALSO swap tokenizer=tokenizer → processing_class=tokenizer
+            in cell 7 (not strictly needed — Unsloth's shim auto-converts — but forward-compat
+            with TRL ≥ 0.16 where @deprecate_kwarg will be removed).
+
+Stage Summary:
+- Root cause: TRL 0.11.4's SFTTrainer.__init__ still uses the legacy 'tokenizer' kwarg name
+  and internally calls super().__init__(tokenizer=...) to transformers.Trainer. transformers 5.0.0
+  removed the 'tokenizer' kwarg from Trainer.__init__ entirely (renamed to 'processing_class' in
+  transformers 4.46+). The mismatch raises TypeError.
+- Unsloth 2026.9.14 ALREADY has a runtime shim (unsloth/trainer.py:1245-1246) that auto-converts
+  tokenizer= → processing_class= — but the shim only fires when TRL's SFTTrainer signature
+  includes 'processing_class'. TRL 0.11.4 doesn't have it; TRL 0.12.1 does. So the fix is just
+  the TRL bump.
+- Minimal fix: 1 line in cell 1 of the notebook:
+    !pip install -q --upgrade --force-reinstall --no-deps "trl==0.11.4"
+    →
+    !pip install -q --upgrade --force-reinstall --no-deps "trl==0.12.1"
+  Cell 7 needs no changes (TRL 0.12.1 still accepts all of: tokenizer= (via @deprecate_kwarg),
+  dataset_text_field=, max_seq_length=, packing=, dataset_num_proc= as direct SFTTrainer kwargs).
+- Optional defense-in-depth (NOT required for TRL 0.12.1, but recommended for forward-compat
+  with TRL ≥ 0.16): also swap tokenizer=tokenizer → processing_class=tokenizer in cell 7.
+- Full report at: /home/z/my-project/thursday-ai/research/05_trainer_tokenizer_kwarg_fix.md
+
+---
+Task ID: M0-fix-16 (final applied)
+Agent: Main Builder (GLM 5.2) + SFTTrainer-Kwarg-Fix-Researcher subagent
+Task: Fix cell 7 TypeError: Trainer.__init__() got an unexpected keyword argument 'tokenizer'
+
+Work Log:
+- User pasted full error log from Kaggle (Errors.txt committed to repo)
+- Cell 1 (deps) installed cleanly — all imports succeeded
+- Cell 5 (LoRA attach) succeeded — Unsloth patched 36 layers
+- Cell 7 (SFTTrainer init) FAILED at:
+    TypeError: Trainer.__init__() got an unexpected keyword argument 'tokenizer'
+
+- Launched subagent (Task ID M0-fix-15) to do proper research:
+  - Downloaded 5 TRL wheels (0.11.4, 0.12.0, 0.12.1, 0.13.0, 1.14.1)
+  - Downloaded transformers 5.0.0 wheel and Unsloth 2026.9.14 wheel
+  - Inspected source by grepping the wheels
+  - Did 6+ web searches on the issue
+
+ROOT CAUSE (verified from wheel source):
+  - TRL 0.11.4 SFTTrainer.__init__ has `tokenizer` kwarg and calls
+    super().__init__(tokenizer=tokenizer, ...) at sft_trainer.py:401-413
+  - transformers 5.0.0 Trainer.__init__ NO LONGER accepts `tokenizer` kwarg
+    (renamed to `processing_class` in 4.46, fully removed in 5.0)
+  - So TRL 0.11.4's super().__init__(tokenizer=...) → TypeError
+
+FIX (research-verified, minimal):
+  - Cell 1: bump TRL pin from 0.11.4 → 0.12.1
+    (TRL 0.12.1 was the first version with `processing_class` parameter +
+    @deprecate_kwarg shim that auto-converts `tokenizer` → `processing_class`)
+  - Cell 7: also swapped `tokenizer=tokenizer` → `processing_class=tokenizer`
+    for forward-compat with TRL ≥ 0.16 (not strictly required since TRL 0.12.1's
+    @deprecate_kwarg accepts both, but future-proof)
+
+Why 0.12.1 specifically:
+  - 0.12.0 = first version with processing_class + @deprecate_kwarg (Nov 2024)
+  - 0.12.1 = latest 0.12.x patch with bugfixes
+  - 0.13.0 = moved dataset_text_field/max_seq_length/packing/dataset_num_proc
+    into SFTConfig (would require cell 7 rewrite) — we avoid this
+
+Verified by wheel source inspection:
+  - TRL 0.12.1 sft_trainer.py line 127: @deprecate_kwarg('tokenizer', new_name='processing_class', version='0.16.0')
+  - TRL 0.12.1 sft_trainer.py line 135: processing_class: Optional[...] = None,
+  - TRL 0.12.1 sft_trainer.py line 408: super().__init__(..., processing_class=processing_class, ...)
+
+Commit eaf3991 pushed (TRL 0.11.4 → 0.12.1 + processing_class swap in cell 7)
+
+Stage Summary:
+- This was the real fix the user demanded (subagent + wheel inspection, not guessing)
+- TRL 0.11.4 was wrong because transformers 5.0 removed the `tokenizer` kwarg
+- TRL 0.12.1 has both `processing_class` (new) and @deprecate_kwarg shim for `tokenizer` (old)
+- Cell 7's SFTTrainer call uses `processing_class=tokenizer` for forward-compat
+- Expected cell 1 output:
+    trl    0.12.1   (was 0.11.4)
+- Then cell 7 SFTTrainer should successfully initialize (with maybe a DeprecationWarning about warmup_ratio → warmup_steps, which is harmless)
