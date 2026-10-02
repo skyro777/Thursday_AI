@@ -1,0 +1,130 @@
+ #5: [unsloth.import_fixes|WARNING]Unsloth: Ignoring an unusable torchao so LoRA can still be built (Found an incompatible version of torchao. Found version 0.10.0, but only versions above 0.16.0 are supported). Run `pip install --upgrade torchao` if you need torchao quantization.
+Unsloth 2026.9.14 patched 36 layers with 36 QKV layers, 36 O layers and 36 MLP layers.
+LoRA adapters attached via Unsloth.
+trainable params: 59,867,136 || all params: 3,145,805,824 || trainable%: 1.9031
+#7: warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
+/kaggle/working/unsloth_compiled_cache/UnslothSFTTrainer.py:985: UserWarning: You passed a `max_seq_length` argument to the SFTTrainer, the value you passed will override the one in the `SFTConfig`.
+  warnings.warn(
+/kaggle/working/unsloth_compiled_cache/UnslothSFTTrainer.py:999: UserWarning: You passed a `dataset_num_proc` argument to the SFTTrainer, the value you passed will override the one in the `SFTConfig`.
+  warnings.warn(
+/kaggle/working/unsloth_compiled_cache/UnslothSFTTrainer.py:1013: UserWarning: You passed a `dataset_text_field` argument to the SFTTrainer, the value you passed will override the one in the `SFTConfig`.
+  warnings.warn(
+Loading widget...
+Loaded train_on_responses_only from unsloth
+Loading widget...
+Loss masking applied: only assistant turns contribute to loss.
+Trainer ready.
+
+#8: ==((====))==  Unsloth - 2x faster free finetuning | Num GPUs used = 2
+   \\   /|    Num examples = 5,006 | Num Epochs = 3 | Total steps = 1,878
+O^O/ \_/ \    Batch size per device = 4 | Gradient accumulation steps = 2
+\        /    Data Parallel GPUs = 1 | Total batch size (4 x 2 x 1) = 8
+ "-____-"     Trainable parameters = 59,867,136 of 3,145,805,824 (1.90% trained)
+Unsloth: Will smartly offload gradients to save VRAM!
+/usr/local/lib/python3.12/dist-packages/unsloth/import_fixes.py:5429: UserWarning: 'has_cuda' is deprecated, please use 'torch.backends.cuda.is_built()'
+  return original(name)
+/usr/local/lib/python3.12/dist-packages/unsloth/import_fixes.py:5429: UserWarning: 'has_cudnn' is deprecated, please use 'torch.backends.cudnn.is_available()'
+  return original(name)
+/usr/local/lib/python3.12/dist-packages/unsloth/import_fixes.py:5429: UserWarning: 'has_mps' is deprecated, please use 'torch.backends.mps.is_built()'
+  return original(name)
+/usr/local/lib/python3.12/dist-packages/unsloth/import_fixes.py:5429: UserWarning: 'has_mkldnn' is deprecated, please use 'torch.backends.mkldnn.is_available()'
+  return original(name)
+---------------------------------------------------------------------------
+OutOfMemoryError                          Traceback (most recent call last)
+/tmp/ipykernel_58/3938263723.py in <cell line: 0>()
+      1 import time
+      2 t0 = time.time()
+----> 3 trainer_stats = trainer.train()
+      4 elapsed = time.time() - t0
+      5 print(f'\nTraining done in {elapsed/60:.1f} minutes.')
+
+/usr/local/lib/python3.12/dist-packages/unsloth/trainer.py in _train_with_reset(*train_args, **train_kwargs)
+   1554                     except Exception:
+   1555                         pass
+-> 1556                     return _orig_train(*train_args, **train_kwargs)
+   1557 
+   1558                 self.train = _train_with_reset
+
+/kaggle/working/unsloth_compiled_cache/UnslothSFTTrainer.py in wrapper(self, *args, **kwargs)
+    114         if hasattr(self, 'model') and hasattr(self.model, "for_training"):
+    115             self.model.for_training(use_gradient_checkpointing=use_gc)
+--> 116         output = f(self, *args, **kwargs)
+    117         # Restore previous mode when possible
+    118         if hasattr(self, 'model') and hasattr(self.model, "for_inference"):
+
+/usr/local/lib/python3.12/dist-packages/transformers/trainer.py in train(self, resume_from_checkpoint, trial, ignore_keys_for_eval)
+   2172                 hf_hub_utils.enable_progress_bars()
+   2173         else:
+-> 2174             return inner_training_loop(
+   2175                 args=args,
+   2176                 resume_from_checkpoint=resume_from_checkpoint,
+
+/usr/local/lib/python3.12/dist-packages/unsloth/models/llama.py in _fast_inner_training_loop(self, batch_size, args, resume_from_checkpoint, trial, ignore_keys_for_eval)
+
+/usr/local/lib/python3.12/dist-packages/unsloth/models/_utils.py in _unsloth_training_step_settling_fallbacks(self, *args, **kwargs)
+   4893                 except Exception:
+   4894                     pass
+-> 4895                 return _training_step_before_settle(self, *args, **kwargs)
+   4896 
+   4897             Trainer.training_step = _unsloth_training_step_settling_fallbacks
+
+/usr/local/lib/python3.12/dist-packages/unsloth/models/_utils.py in _unsloth_training_step(***failed resolving arguments***)
+
+/usr/local/lib/python3.12/dist-packages/accelerate/accelerator.py in backward(self, loss, **kwargs)
+   2832             return
+   2833         elif self.scaler is not None:
+-> 2834             self.scaler.scale(loss).backward(**kwargs)
+   2835         elif learning_rate is not None and self.has_lomo_optimizer:
+   2836             self.lomo_backward(loss, learning_rate)
+
+/usr/local/lib/python3.12/dist-packages/torch/_tensor.py in backward(self, gradient, retain_graph, create_graph, inputs)
+    628                 inputs=inputs,
+    629             )
+--> 630         torch.autograd.backward(
+    631             self, gradient, retain_graph, create_graph, inputs=inputs
+    632         )
+
+/usr/local/lib/python3.12/dist-packages/torch/autograd/__init__.py in backward(tensors, grad_tensors, retain_graph, create_graph, grad_variables, inputs)
+    362     # some Python versions print out the first line of a multi-line function
+    363     # calls in the traceback and some print out the last line
+--> 364     _engine_run_backward(
+    365         tensors,
+    366         grad_tensors_,
+
+/usr/local/lib/python3.12/dist-packages/torch/autograd/graph.py in _engine_run_backward(t_outputs, *args, **kwargs)
+    863         unregister_hooks = _register_logging_hooks_on_whole_graph(t_outputs)
+    864     try:
+--> 865         return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+    866             t_outputs, *args, **kwargs
+    867         )  # Calls into the C++ engine to run the backward pass
+
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py in apply(self, *args)
+    315             )
+    316         user_fn = vjp_fn if vjp_fn is not Function.vjp else backward_fn
+--> 317         return user_fn(self, *args)
+    318 
+    319     def apply_jvp(self, *args):
+
+/usr/local/lib/python3.12/dist-packages/unsloth_zoo/gradient_checkpointing.py in backward(ctx, *args)
+   1188             # )
+   1189         else:
+-> 1190             torch.autograd.backward(outputs_with_grad, args_with_grad)
+   1191         pass
+   1192 
+
+/usr/local/lib/python3.12/dist-packages/torch/autograd/__init__.py in backward(tensors, grad_tensors, retain_graph, create_graph, grad_variables, inputs)
+    362     # some Python versions print out the first line of a multi-line function
+    363     # calls in the traceback and some print out the last line
+--> 364     _engine_run_backward(
+    365         tensors,
+    366         grad_tensors_,
+
+/usr/local/lib/python3.12/dist-packages/torch/autograd/graph.py in _engine_run_backward(t_outputs, *args, **kwargs)
+    863         unregister_hooks = _register_logging_hooks_on_whole_graph(t_outputs)
+    864     try:
+--> 865         return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+    866             t_outputs, *args, **kwargs
+    867         )  # Calls into the C++ engine to run the backward pass
+
+OutOfMemoryError: CUDA out of memory. Tried to allocate 3.18 GiB. GPU 1 has a total capacity of 14.56 GiB of which 2.55 GiB is free. Including non-PyTorch memory, this process has 12.01 GiB memory in use. Of the allocated memory 11.75 GiB is allocated by PyTorch, and 108.42 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+
