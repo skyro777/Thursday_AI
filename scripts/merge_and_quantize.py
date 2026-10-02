@@ -90,11 +90,26 @@ def convert_to_gguf(merged_dir: str, gguf_path: str, quant: str = "Q4_K_M") -> N
     print(f"[gguf] quantizing to {quant}", file=sys.stderr)
     quantize_bin = Path(llama_cpp_path) / "build" / "bin" / "llama-quantize"
     if not quantize_bin.exists():
-        # try alternate path
+        # try alternate path (older llama.cpp layout)
         quantize_bin = Path(llama_cpp_path) / "llama-quantize"
     if not quantize_bin.exists():
-        print(f"ERROR: llama-quantize binary not found in {llama_cpp_path}.", file=sys.stderr)
-        print("Build llama.cpp: cd llama.cpp && make", file=sys.stderr)
+        # M0-fix-19: llama.cpp removed its Makefile build system (late 2025).
+        # Now CMake only. Build it on the fly.
+        print(f"llama-quantize not found; building with CMake (Makefile was removed)...", file=sys.stderr)
+        build_dir = Path(llama_cpp_path) / "build"
+        subprocess.run(
+            ["cmake", "-B", str(build_dir), "-S", llama_cpp_path, "-DCMAKE_BUILD_TYPE=Release"],
+            check=True,
+        )
+        subprocess.run(
+            ["cmake", "--build", str(build_dir), "--config", "Release",
+             "--target", "llama-quantize", "-j", "4"],
+            check=True,
+        )
+        quantize_bin = Path(llama_cpp_path) / "build" / "bin" / "llama-quantize"
+    if not quantize_bin.exists():
+        print(f"ERROR: llama-quantize binary not found in {llama_cpp_path}/build/bin/.", file=sys.stderr)
+        print("Build llama.cpp with: cmake -B build && cmake --build build --config Release -j 4", file=sys.stderr)
         sys.exit(2)
     subprocess.run([str(quantize_bin), f16_path, gguf_path, quant], check=True)
 
