@@ -5,7 +5,40 @@
 > Owner: @skyro777 (with GLM-5.2 as the build copilot)
 > Repo: https://github.com/skyro777/Thursday_AI
 > Started: 2025
-> Current revision: **v0.1 (kickoff)**
+> Current revision: **v0.1.1 (post-smoke-train — honest status update)**
+
+---
+
+## ⚠️ Honest current status (read this first)
+
+**What we have:** A trained LoRA adapter on Qwen2.5-3B-Instruct, produced by a 0.9-minute smoke run on 5,000 template-generated examples.
+
+**What it can actually do (limited):**
+- ✅ Emit valid Qwen2 tool-call JSON format
+- ✅ Pick the right tool name from the 26-tool list when prompted simply
+- ✅ Be loaded via Ollama on your potato PC
+
+**What it CANNOT do yet (the real work):**
+- ❌ Generalize to real-world user phrasings (templates are too narrow)
+- ❌ Handle multi-step error recovery (templates are happy-path only)
+- ❌ Actually control your PC (no runtime orchestrator built yet)
+- ❌ Understand your voice (Whisper.cpp integration not done — that's M3 work)
+- ❌ See what's on your screen (VLM integration not done — that's M3+ work)
+
+**Calling it "Thursday AI v0.1" was misleading.** This is a **plumbing verification** — proof that the training pipeline works end-to-end. The real v0.1 requires the full 90k-example dataset (Methods A+B+C + xLAM + Mind2Web + WebVoyager) and ~6-8 hours of training.
+
+### What you can do RIGHT NOW with the smoke checkpoint
+
+If you push it to HF Hub and pull it via Ollama, you can chat with it in the Qwen2 tool-call format and it'll emit JSON-shaped tool calls — but the calls won't be reliable on real prompts, and there's nothing to execute them yet.
+
+### What you should do NEXT to get the real v0.1
+
+1. **Verify plumbing end-to-end** (cell 12 → 13 → 14): get the GGUF uploaded to HF Hub and confirmed loadable via Ollama. This proves the packaging works.
+2. **Generate the real dataset** (M1 in the roadmap): run `scripts/generate_llm_distilled.py` to produce Method B examples (this needs a teacher LLM — use Z.ai SDK or local Ollama with Qwen2.5-7B).
+3. **Set `smoke_mode: False` in CONFIG** and re-run the notebook — 6-8 hours of training on 90k examples. THAT will be the real v0.1.
+4. **Build the runtime orchestrator** (M3 in the roadmap) — the Python loop that takes the model's tool calls and actually executes them via pyautogui / playwright / subprocess.
+
+See §7 (Build Roadmap) for the milestone breakdown.
 
 ---
 
