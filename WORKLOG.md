@@ -1259,3 +1259,39 @@ Stage Summary:
 - Real v0.1 requires the full 90k dataset + 6-8 hour training run + runtime orchestrator (M3)
 - Added CONFIG flag + dataset-size logic to make smoke vs full training toggleable
 - Added immediate HF token permission check so token issues surface in 5 sec not 5 hours
+
+---
+Task ID: M0-fix-21
+Agent: Main Builder (GLM 5.2)
+Task: Fix 403 Forbidden on HF upload — wrong namespace (skyro777 vs actual HF username)
+
+Work Log:
+- User reported cell 13 error: 403 Forbidden: You don't have the rights to create a model under the namespace "skyro777"
+- Read the error message carefully: HF is rejecting because the token's user is NOT 'skyro777'
+- User's HF account (from screenshot VLM analysis) is 'Skyro7777777' (with 7s)
+- The CONFIG had hardcoded 'skyro777/thursday-ai-v0.1-merged' — that's the GITHUB username
+- GitHub username (skyro777) ≠ HF username (Skyro7777777)
+
+FIX:
+1. Cell 2 (CONFIG): removed hardcoded 'skyro777/' prefix. Repo names are now just basenames:
+   'hf_repo_merged' : 'thursday-ai-v0.1-merged'
+   'hf_repo_gguf'   : 'thursday-ai-v0.1-gguf'
+2. Cell 6 (HF login): after whoami() returns the actual HF username, prepend it:
+   CONFIG['hf_repo_merged'] = f'{username}/thursday-ai-v0.1-merged'
+   CONFIG['hf_repo_gguf']   = f'{username}/thursday-ai-v0.1-gguf'
+3. Also fixed indentation bug from previous templating attempt (20-space indent in wrong place)
+4. Verified Python syntax with ast.parse() — VALID
+
+Expected cell 6 output:
+  Token is valid. Logged in as: Skyro7777777
+  Will upload merged model to: Skyro7777777/thursday-ai-v0.1-merged
+  Will upload GGUF to:          Skyro7777777/thursday-ai-v0.1-gguf
+  Token has WRITE permission
+
+Commit a821005 pushed.
+
+Stage Summary:
+- User can re-download notebook, restart kernel, run cell 1-6 to verify
+- Cell 6 will print the actual HF username + the resolved repo names
+- Then cells 7-13 will work because the namespace matches the token's user
+- After cell 13 succeeds, the GGUF will be on HF Hub under the right username
