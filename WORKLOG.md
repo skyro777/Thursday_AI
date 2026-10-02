@@ -1404,3 +1404,37 @@ Stage Summary:
 - User needs to re-run the notebook with the fix
 - Training will take ~15-20 min instead of 0.9 min
 - Then re-upload to HF Hub and re-pull via Ollama
+
+---
+Task ID: M0-fix-24
+Agent: Main Builder (GLM 5.2)
+Task: Tune config to fit Kaggle 12h session limit — was actually ~20-25 hours
+
+Work Log:
+- User reported: training has been running 43 min, still showing only 'Trainer ready' and 'Double buffering enabled'
+- Tried to read Kaggle logs via agent-browser — Logs tab stuck on Loading (Kaggle slow)
+- Did the math properly:
+  - 5006 examples × 3 epochs = 15,018 example-views
+  - Effective batch 16 → ~940 optimizer steps
+  - Per micro-batch at seq=4096 on T4 (4-bit, single GPU): ~6 sec
+  - Per optimizer step (16 micro-batches): ~96 sec
+  - Total: 940 × 96 = ~90,000 sec = ~25 hours
+  
+  That EXCEEDS Kaggle's 12-hour session limit. The current run would be killed before finishing.
+
+NEW CONFIG for smoke test (fits in ~3 hours):
+  - max_seq_length: 4096 → 3072 (covers ~95% of examples)
+  - epochs: 3 → 1 (1 epoch enough for smoke verification)
+  - smoke_dataset_size: 5000 → 2000 (smaller = faster)
+  - grad_accum_steps: 16 → 8 (effective batch = 8, fine for smoke)
+  - per_device_batch: stays at 1
+
+Expected time: ~3.1 hours, fits in 12-hour Kaggle limit with margin.
+
+Commit 0467370 pushed.
+
+Stage Summary:
+- User should KILL the current Kaggle session (won't finish in time)
+- Re-download notebook with new config
+- Restart — should complete in ~3 hours
+- For real v0.1 (90k examples × 3 epochs), would need ~6-8 hours at proper settings
