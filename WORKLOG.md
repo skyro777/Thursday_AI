@@ -1218,3 +1218,44 @@ Stage Summary:
     Cell 12: build llama.cpp with CMake → convert HF to f16 GGUF → quantize to Q4_K_M
     Cell 13: push merged model + GGUF to HuggingFace Hub
     Cell 14: smoke-test the model on a "set alarm" prompt
+
+---
+Task ID: M0-fix-20
+Agent: Main Builder (GLM 5.2)
+Task: Two fixes — (1) HF token permission check at START (2) honest status update + smoke_mode flag
+
+Work Log:
+- User raised two questions:
+  1. HF token: created with Full Access + all 18 permissions (verified by VLM on screenshot), but Kaggle notebook says no permission at the END
+  2. Why is training only 0.9 minutes? How can AI be trained for PC control + voice understanding in 0.9 min? Is this just a template?
+
+- For Q1 (HF token permission check at START):
+  - Used VLM skill on the screenshot to verify token has Full Access preset + all 18 perms
+  - Token IS valid. The issue is: the notebook only validated token at the END (cell 13), wasting hours if the token lacked write permission
+  - Fix: added a permission check in cell 2 (right after login). Calls whoami(token=HF_TOKEN), reads token scopes, prints 'Token has WRITE permission' or a detailed fix message. Runs in 5 seconds.
+
+- For Q2 (honest answer about training time + what the smoke checkpoint actually is):
+  - 0.9 min on 5k examples × 3 epochs = 939 gradient steps. Math is plausible for 3B model + 60M trainable params on T4 with Unsloth optimizations.
+  - BUT what the model learned is JUST the tool-call JSON FORMAT, not real PC control
+  - Templates are hand-authored narrow distributions (10 templates × slot cross-products)
+  - Model cannot generalize to real user phrasings
+  - No multi-step error recovery (templates are happy-path only)
+  - No runtime yet to execute tool calls (M3 work)
+  - No voice integration yet (M3 work, separate from LLM)
+
+  Added smoke_mode flag to CONFIG:
+    smoke_mode=True (default): 5k examples, ~1 min training (plumbing only)
+    smoke_mode=False: 90k examples, ~6-8 hours (real v0.1)
+
+- Updated LIVING_PLAN.md with prominent 'Honest current status' section at the top:
+    - What the smoke checkpoint CAN do (limited)
+    - What it CANNOT do (the real work)
+    - 4 next steps to get real v0.1
+
+- Commits 80fdec9 (notebook: HF check + smoke_mode) + 22af3e4 (LIVING_PLAN: honest status) pushed
+
+Stage Summary:
+- Was honest with user: smoke checkpoint is plumbing verification only, NOT a functional Thursday AI
+- Real v0.1 requires the full 90k dataset + 6-8 hour training run + runtime orchestrator (M3)
+- Added CONFIG flag + dataset-size logic to make smoke vs full training toggleable
+- Added immediate HF token permission check so token issues surface in 5 sec not 5 hours
