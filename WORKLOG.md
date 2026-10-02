@@ -1346,3 +1346,61 @@ Stage Summary:
 
 - This is the SMOKE checkpoint (plumbing verification), not the real v0.1.
   Real v0.1 needs 90k examples × 6-8 hours training (see LIVING_PLAN.md).
+
+---
+Task ID: M0-fix-23
+Agent: Main Builder (GLM 5.2)
+Task: Fix the REAL problem — max_seq_length=2048 caused 5000/5006 examples to be DROPPED
+
+Work Log:
+- User reported: pulled the GGUF via Ollama, prompted 'Hey Thursday, set an alarm for 7 am tomorrow'
+  Model responded with generic Qwen response: 'I'm sorry for the confusion, but I don't have the capability to set alarms...'
+  This means the LoRA barely trained at all.
+
+- Used agent-browser to read Kaggle logs again. Found the SMOKING GUN at log entry #123:
+    "Unsloth: Removed 5000 out of 5006 samples from train_dataset where all labels were -100 
+    (no response marker found, usually truncation). This prevents NaN loss during training."
+
+  5000 out of 5006 training examples were THROWN OUT before training began!
+  The model effectively trained on only 6 examples for 0.9 minutes.
+
+ROOT CAUSE:
+  - The 26-tool JSON schema is ~3,700 tokens by itself (verified: tools.json = 14,798 chars ≈ 3,699 tokens)
+  - System prompt is ~500 tokens
+  - Multi-turn messages add 500-1500 tokens
+  - Total per example: 4,500-6,000+ tokens
+  - max_seq_length=2048 (which I set during M0-fix-18 OOM fix) truncated EVERY example at 2048
+    BEFORE the assistant response marker '<|im_start|>assistant\n' could appear
+  - train_on_responses_only couldn't find the response marker → set all labels to -100 (ignore)
+  - Unsloth removed those examples to prevent NaN loss
+  - Result: 6 examples survived, 5000 were dropped
+
+  The OOM fix (M0-fix-18) set max_seq_length to 2048 to save memory. But the OOM was caused
+  by device_map='auto' (model-parallel sharding concentrating logits on GPU 1), NOT by seq_length.
+  After removing device_map='auto' (single-GPU), we have ~7 GiB headroom — seq=4096 is safe.
+
+FIX:
+  - max_seq_length: 2048 → 4096
+  - per_device_batch: 2 → 1 (safer with seq=4096)
+  - grad_accum_steps: 8 → 16 (keeps effective batch = 16)
+
+  Also added a token length distribution check in the dataset formatting cell that:
+  - Prints min/max/mean/median token lengths
+  - Warns if >10% of examples exceed max_seq_length
+  - Catches this kind of issue BEFORE training, not after
+
+Expected behavior after re-training:
+  - Cell 8 should show 'Num examples = 5,006' (not ~6)
+  - Training should take ~15-20 min (not 0.9 min)
+  - Final loss should drop to 0.3-0.6 (not 1.34)
+  - Model should emit tool_calls when prompted with 'Hey Thursday, set an alarm'
+  - After re-upload to HF Hub, Ollama should get proper tool-call responses
+
+Commit 612c190 pushed.
+
+Stage Summary:
+- This was THE bug causing the model to behave like vanilla Qwen
+- 5000/5006 examples were silently dropped due to truncation
+- User needs to re-run the notebook with the fix
+- Training will take ~15-20 min instead of 0.9 min
+- Then re-upload to HF Hub and re-pull via Ollama
