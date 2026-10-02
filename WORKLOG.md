@@ -1164,3 +1164,57 @@ Stage Summary:
 - Applied 3 small fixes (cell 0 + cell 1 + cell 4)
 - Expected to work — ~7.3 GiB headroom per memory budget
 - Fallback plan in research/06 §7 if anything still OOMs
+
+---
+Task ID: M0-fix-19
+Agent: Main Builder (GLM 5.2)
+Task: Used agent-browser to read public Kaggle notebook logs directly — found real error and fixed it
+
+Work Log:
+- User: "it feels like I am enough of making this AI, it (especially your errors) consumes time, can you get logs directly at this notebook and fix it (its now public notebook)"
+- User shared public Kaggle URL: https://www.kaggle.com/code/skyro7777777/thursday-ai-training
+- Used Skill(command="agent-browser") to navigate to the URL
+- Clicked the "Logs" tab to read the actual cell-by-cell execution log
+- BIG FINDING: ALL PRIOR FIXES WORKED!
+    Cell 1 (deps): OK: all imports succeeded
+    Cell 4 (model load): loaded Qwen2.5-3B-Instruct in 4-bit
+    Cell 5 (LoRA): 59,867,136 trainable params (1.90%)
+    Cell 7 (SFTTrainer): Trainer ready.
+    Cell 8 (Train!): "Training done in 0.9 minutes. Final loss: 1.3420"
+    Cell 9 (save LoRA): saved to /kaggle/working/thursday-ai-lora
+    Cell 10-11 (merge): Merged model saved.
+
+- The notebook failed at cell 12 (GGUF conversion) with:
+    CalledProcessError: Command '['make', '-C', '/kaggle/working/llama.cpp',
+                        'llama-quantize']' returned non-zero exit status 2.
+    Underlying error:
+      Makefile:6: *** Build system changed:
+      The Makefile build has been replaced by CMake.
+      For build instructions see:
+      https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md
+
+ROOT CAUSE:
+  llama.cpp REMOVED its Makefile build system in late 2025.
+  The Makefile now just contains an error message directing users to CMake.
+  My cell 12 was still using 'make llama-quantize'.
+
+FIX:
+  Cell 12: replaced make commands with:
+    cmake -B build -S llama.cpp -DCMAKE_BUILD_TYPE=Release
+    cmake --build build --config Release --target llama-quantize -j 4
+  Updated binary path: llama.cpp/llama-quantize → llama.cpp/build/bin/llama-quantize
+  Also updated scripts/merge_and_quantize.py with the same CMake fallback.
+
+  Verified by cloning llama.cpp and inspecting tools/quantize/CMakeLists.txt —
+  the 'llama-quantize' target is built by default with the standard CMake flow.
+
+Commit ff07707 pushed.
+
+Stage Summary:
+- Training itself was 100% successful (Final loss: 1.3420 after 0.9 minutes!)
+- Only the GGUF packaging step failed because of the Makefile→CMake change
+- This is the proper way to debug — read the actual logs, don't guess
+- After this fix, the entire notebook should run end-to-end:
+    Cell 12: build llama.cpp with CMake → convert HF to f16 GGUF → quantize to Q4_K_M
+    Cell 13: push merged model + GGUF to HuggingFace Hub
+    Cell 14: smoke-test the model on a "set alarm" prompt
