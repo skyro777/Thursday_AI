@@ -67,12 +67,26 @@ FILE_PATHS = ["~/Downloads/notes.txt", "~/Documents/todo.md", "~/projects/main.p
 # ---------------------------------------------------------------------------
 
 def load_tools() -> list[dict]:
-    """Load the full tool surface. Templates can either pass the full 26-tool
-    array (so the model sees every tool even if a turn only uses one), or pass
-    a subset (so the model learns to ignore irrelevant tools).
-    For training, we always pass the full 26-tool array for realism."""
+    """Load the full 26-tool surface (use sparingly — it's ~3700 tokens)."""
     with SCHEMA_PATH.open() as f:
         return json.load(f)["tools"]
+
+
+def get_relevant_tools(used_names: set, include_common: bool = True) -> list[dict]:
+    """Return only the tools actually used in this example, plus common ones.
+    
+    The full 26-tool schema is ~3700 tokens — passing it to every example
+    means examples blow past max_seq_length=2048 and get truncated, which
+    causes Unsloth to drop them (the '5000/5006 samples removed' bug).
+    
+    By passing only relevant tools, examples shrink to ~1500 tokens and
+    fit comfortably in max_seq_length=2048.
+    """
+    all_tools = load_tools()
+    # Always include ask_user + finish (conversation/safety tools the model needs to know about)
+    if include_common:
+        used_names = used_names | {"ask_user", "finish"}
+    return [t for t in all_tools if t["name"] in used_names]
 
 
 def system_prompt(os_profile: str, now_iso: str, user_name: str) -> str:
@@ -156,7 +170,7 @@ def tpl_set_alarm(rng: random.Random) -> dict:
     label = rng.choice(ALARM_LABELS)
     now_iso = random_iso_time(rng)
 
-    tools = load_tools()
+    tools = get_relevant_tools({'set_alarm'})
     msgs = [
         user(f"Hey Thursday, set an alarm for {hour:02d}:{minute:02d} tomorrow."),
         assistant("On it.", [call("call_001", "set_alarm", {"hour": hour, "minute": minute, "label": label})]),
@@ -182,7 +196,7 @@ def tpl_open_app(rng: random.Random) -> dict:
     pretty_apps = {"gnome-clocks": "Clocks", "gnome-text-editor": "Text Editor", "vscode": "VS Code", "files": "Files", "explorer": "File Explorer", "clocks": "Clocks", "terminal": "Terminal", "konsole": "Konsole", "dolphin": "Dolphin", "kate": "Kate", "kmail": "KMail", "notes": "Notes", "finder": "Finder", "mail": "Mail", "notepad": "Notepad", "cmd": "Command Prompt", "powershell": "PowerShell", "safari": "Safari", "firefox": "Firefox", "chrome": "Chrome", "chromium": "Chromium", "thunderbird": "Thunderbird", "blender": "Blender", "gimp": "GIMP", "spotify": "Spotify"}
     pretty = pretty_apps.get(app, app)
 
-    tools = load_tools()
+    tools = get_relevant_tools({'open_app'})
     msgs = [
         user(f"Open {pretty} for me."),
         assistant("Opening.", [call("call_001", "open_app", {"app_name": app})]),
@@ -205,7 +219,7 @@ def tpl_set_volume(rng: random.Random) -> dict:
     pct, desc = rng.choice(VOLUME_LEVELS)
     now_iso = random_iso_time(rng)
 
-    tools = load_tools()
+    tools = get_relevant_tools({'set_volume'})
     msgs = [
         user(f"Turn the volume to {pct}."),
         assistant("Setting volume.", [call("call_001", "set_volume", {"percent": pct})]),
@@ -239,7 +253,7 @@ def tpl_browser_search_simple(rng: random.Random) -> dict:
     ])
     now_iso = random_iso_time(rng)
 
-    tools = load_tools()
+    tools = get_relevant_tools({'read_webai_response', 'browser_search'})
     fake_url = f"https://en.wikipedia.org/wiki/{query.replace(' ', '_')}"
     msgs = [
         user(f"{query.capitalize()}?"),
@@ -274,7 +288,7 @@ def tpl_open_url(rng: random.Random) -> dict:
     url, label = rng.choice(urls)
     now_iso = random_iso_time(rng)
 
-    tools = load_tools()
+    tools = get_relevant_tools({'open_url'})
     msgs = [
         user(f"Open {label}."),
         assistant("Opening.", [call("call_001", "open_url", {"url": url})]),
@@ -305,7 +319,7 @@ def tpl_delegate_to_webai(rng: random.Random) -> dict:
     ]
     user_prompt, webai_answer = rng.choice(prompts)
 
-    tools = load_tools()
+    tools = get_relevant_tools({'paste_to_webai'})
     msgs = [
         user(user_prompt),
         assistant("Thinking it through.", [call("call_001", "paste_to_webai", {"query": user_prompt})]),
@@ -329,7 +343,7 @@ def tpl_world_news(rng: random.Random) -> dict:
     now_iso = random_iso_time(rng)
     query = rng.choice(NEWS_QUERIES)
 
-    tools = load_tools()
+    tools = get_relevant_tools({'paste_to_webai', 'ask_user', 'read_webai_response'})
     headlines = [
         ("Climate summit reaches surprise agreement", "https://example-news.com/climate", "Negotiators finalized a framework to phase out coal by 2035..."),
         ("Major tech outage hits airlines", "https://example-news.com/outage", "A software update grounded flights worldwide..."),
@@ -374,7 +388,7 @@ def tpl_explain_file(rng: random.Random) -> dict:
     }
     content, summary = files[path]
 
-    tools = load_tools()
+    tools = get_relevant_tools({'read_file'})
     msgs = [
         user(f"What's in {path}?"),
         assistant("Reading it.", [call("call_001", "read_file", {"path": path})]),
@@ -406,7 +420,7 @@ def tpl_ask_user_clarify(rng: random.Random) -> dict:
     ]
     user_msg, question = rng.choice(ambiguous)
 
-    tools = load_tools()
+    tools = get_relevant_tools({'ask_user'})
     msgs = [
         user(user_msg),
         assistant("Just checking.", [call("call_001", "ask_user", {"question": question})]),
@@ -439,7 +453,7 @@ def tpl_list_dir(rng: random.Random) -> dict:
     }
     items = listings[path]
 
-    tools = load_tools()
+    tools = get_relevant_tools({'list_dir'})
     msgs = [
         user(f"What's in {path}?"),
         assistant("Listing.", [call("call_001", "list_dir", {"path": path})]),
